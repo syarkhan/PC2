@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    card_view:cardElevation="2dp"
+    card_view:cardCornerRadius="6dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    card_view:cardBackgroundColor="@color/white"
+    >
+
+
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+
+
+
+    <!--<ProgressBar-->
+    <!--android:id="@+id/recyclerViewProgressBar"-->
+    <!--android:layout_width="40dp"-->
+    <!--android:layout_height="40dp"-->
+    <!--android:layout_gravity="center"-->
+    <!--android:layout_marginRight="8dp"-->
+    <!--app:layout_constraintRight_toRightOf="parent"-->
+    <!--android:layout_marginLeft="8dp"-->
+    <!--android:layout_marginTop="10dp"-->
+    <!--app:layout_constraintTop_toTopOf="parent"-->
+    <!--app:layout_constraintLeft_toLeftOf="parent" />-->
+
+
+    <!--<View-->
+        <!--android:layout_height="20dp"-->
+        <!--android:layout_width="100dp"-->
+        <!--android:background="@drawable/post_tag_color"-->
+        <!--app:layout_constraintTop_toTopOf="parent"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--/>-->
+
+
+    <TextView
+        android:id="@+id/txtLocation"
+        android:layout_width="0dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="50dp"
+        android:text="Clifton Block 3"
+        android:textColor="@color/green"
+        android:textSize="@dimen/feed_item_timestamp"
+        app:layout_constraintLeft_toRightOf="@+id/imgProfilePic"
+        app:layout_constraintTop_toBottomOf="@+id/txtName"
+        app:layout_constraintRight_toLeftOf="@+id/txtSecondary"
+        android:layout_marginRight="35dp"
+        app:layout_constraintHorizontal_bias="0.952" />
+
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        app:layout_constraintRight_toLeftOf="@+id/txtLocation"
+        app:layout_constraintTop_toTopOf="@+id/txtLocation"
+        app:srcCompat="@drawable/ic_loc" />
+
+    <ImageView
+        android:id="@+id/imgProfilePic"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="fitXY"
+        android:background="@drawable/circle_image"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!--<View-->
+    <!--android:layout_width="10dp"-->
+    <!--android:layout_height="10dp"-->
+    <!--android:background="@drawable/red_dot"-->
+    <!--app:layout_constraintTop_toTopOf="parent"-->
+    <!--android:layout_marginTop="1dp"-->
+    <!--android:layout_marginLeft="1dp"-->
+    <!--app:layout_constraintLeft_toLeftOf="parent" />-->
+
+    <!--<View-->
+    <!--android:layout_width="10dp"-->
+    <!--android:layout_height="10dp"-->
+    <!--android:background="@drawable/red_dot"-->
+    <!--app:layout_constraintTop_toTopOf="parent"-->
+    <!--android:layout_marginTop="1dp"-->
+    <!--android:layout_marginLeft="377dp"-->
+    <!--android:layout_marginRight="1dp"-->
+    <!--app:layout_constraintRight_toRightOf="parent" />-->
+
+    <!--<View-->
+    <!--android:layout_width="10dp"-->
+    <!--android:layout_height="10dp"-->
+    <!--android:background="@drawable/red_dot"-->
+    <!--android:layout_marginLeft="1dp"-->
+    <!--app:layout_constraintLeft_toLeftOf="parent"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--android:layout_marginBottom="1dp" />-->
+
+    <!--<View-->
+    <!--android:layout_width="10dp"-->
+    <!--android:layout_height="10dp"-->
+    <!--android:background="@drawable/red_dot"-->
+    <!--app:layout_constraintRight_toRightOf="parent"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--android:layout_marginBottom="1dp"-->
+    <!--android:layout_marginRight="1dp" />-->
+
+    <TextView
+        android:id="@+id/txtName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Khan"
+        android:textColor="#000"
+        android:textSize="@dimen/feed_item_profile_name"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/imgProfilePic"
+        app:layout_constraintTop_toTopOf="@+id/imgProfilePic" />
+
+
+    <TextView
+        android:id="@+id/txtTimeStampAndLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:text="20 mins ago"
+        android:textSize="@dimen/feed_item_timestamp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/txtName"
+        android:layout_marginTop="3dp" />
+
+    <View
+        android:id="@+id/view2"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/white"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imgProfilePic" />
+
+    <TextView
+        android:id="@+id/txtStatusMsg"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum "
+        android:textColor="#3c3c3c"
+        android:textSize="15sp"
+        app:layout_constraintLeft_toLeftOf="@+id/imgProfilePic"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imgProfilePic" />
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewPager"
+        android:layout_width="0dp"
+        android:layout_height="270dp"
+        android:layout_marginTop="8dp"
+        android:background="#f7f7f7"
+        android:visibility="visible"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtStatusMsg"
+
+        />
+
+    <android.support.design.widget.TabLayout
+        android:id="@+id/pagerTabs"
+        android:layout_width="0dp"
+        android:layout_height="12dp"
+        android:visibility="visible"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewPager"
+        app:tabBackground="@drawable/tab_selector"
+        app:tabGravity="center"
+        app:tabIndicatorHeight="0dp"
+        app:tabMaxWidth="8dp" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:background="#eee"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pagerTabs" />
+
+    <ImageView
+        android:id="@+id/imageView4"
+        android:layout_width="13dp"
+        android:layout_height="15dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="3dp"
+        app:layout_constraintLeft_toRightOf="@+id/txtName"
+        app:layout_constraintTop_toTopOf="@+id/txtName"
+        app:srcCompat="@mipmap/user2" />
+
+
+    <TextView
+        android:id="@+id/txtLikes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:paddingBottom="12dp"
+        android:text="80 Likes ."
+        android:textSize="12sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view" />
+
+    <TextView
+        android:id="@+id/txtComments"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="8dp"
+        android:paddingBottom="12dp"
+        android:text="2 Comments"
+        android:textSize="12sp"
+        app:layout_constraintLeft_toRightOf="@id/txtLikes"
+        app:layout_constraintTop_toBottomOf="@+id/view" />
+
+    <TextView
+        android:id="@+id/txtSecondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Secondary"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:textSize="@dimen/feed_item_timestamp"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintTop_toTopOf="@+id/txtLocation"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnHelpful"
+        android:layout_width="20dp"
+        android:layout_height="25dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/cardview_light_background"
+        android:tag="like"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view"
+        app:srcCompat="@mipmap/ic_like" />
+
+    <ImageButton
+        android:id="@+id/btnComments"
+        android:layout_width="20dp"
+        android:layout_height="25dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/cardview_light_background"
+        app:layout_constraintRight_toLeftOf="@id/btnHelpful"
+        app:layout_constraintTop_toBottomOf="@+id/view"
+        app:srcCompat="@mipmap/ic_comment" />
+
+    <!--<Button-->
+        <!--android:id="@+id/button3"-->
+        <!--android:layout_width="25dp"-->
+        <!--android:layout_height="30dp"-->
+        <!--android:layout_marginTop="20dp"-->
+        <!--android:background="@drawable/ic_settings"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent" />-->
+
+
+    <!--<ImageView-->
+    <!--android:id="@+id/imageView5"-->
+    <!--android:layout_width="60dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginTop="4dp"-->
+    <!--app:layout_constraintTop_toBottomOf="@+id/view"-->
+    <!--app:srcCompat="@drawable/helpfull"-->
+    <!--app:layout_constraintRight_toLeftOf="@+id/imageView6"-->
+    <!--android:layout_marginRight="3dp"-->
+    <!--android:layout_marginEnd="3dp" />-->
+
+    <!--<ImageView-->
+    <!--android:id="@+id/imageView6"-->
+    <!--android:layout_width="75dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginTop="4dp"-->
+    <!--app:layout_constraintTop_toBottomOf="@+id/view"-->
+    <!--app:srcCompat="@drawable/comment"-->
+    <!--android:layout_marginRight="8dp"-->
+    <!--app:layout_constraintRight_toRightOf="parent"-->
+    <!--android:layout_marginEnd="8dp" />-->
+
+
+</android.support.constraint.ConstraintLayout>
+
+</android.support.v7.widget.CardView>
+    <!--<android.support.constraint.ConstraintLayout-->
+
+    <!--android:layout_width="0dp"--><!--android:layout_height="wrap_content"--><!--android:background="@color/white"--><!--android:layout_marginTop="12dp"--><!--app:layout_constraintTop_toBottomOf="@+id/coordinatorLayout"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintRight_toRightOf="parent"--><!--android:id="@+id/coordinatorLayout2">-->
+
+
+    <!--<ImageView--><!--android:id="@+id/imageView9"--><!--android:layout_width="40dp"--><!--android:layout_height="40dp"--><!--android:scaleType="fitXY"--><!--app:srcCompat="@drawable/loginbg"--><!--app:layout_constraintTop_toTopOf="parent"--><!--android:layout_marginTop="8dp"--><!--android:layout_marginLeft="8dp"--><!--app:layout_constraintLeft_toLeftOf="parent" />--><!--</android.support.constraint.ConstraintLayout>-->
+
+
+    <!--<android.support.constraint.ConstraintLayout--><!--xmlns:android="http://schemas.android.com/apk/res/android"--><!--xmlns:app="http://schemas.android.com/apk/res-auto"--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:background="@color/white"--><!--android:layout_marginTop="15dp"--><!--xmlns:tools="http://schemas.android.com/tools"--><!--&gt;-->
+
+    <!---->
+
+
+    <!--<ImageView--><!--android:id="@+id/imgProfilePic"--><!--android:layout_width="40dp"--><!--android:layout_height="40dp"--><!--android:scaleType="fitXY"--><!--android:src="@drawable/loginbg"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintTop_toTopOf="parent"--><!--android:layout_marginTop="8dp"--><!--android:layout_marginStart="8dp"></ImageView>-->
+
+    <!--<TextView-->
+
+    <!--android:id="@+id/txtName"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:layout_marginStart="8dp"--><!--android:text="Sheryar Khan"--><!--android:textSize="@dimen/feed_item_profile_name"--><!--android:textStyle="bold"--><!--app:layout_constraintLeft_toRightOf="@+id/imgProfilePic"--><!--app:layout_constraintTop_toTopOf="@+id/imgProfilePic"--><!--tools:textColor="@android:color/black" />-->
+
+    <!--<TextView--><!--android:id="@+id/txtTimeStamp"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:text="20 mins ago @ Clifton Block 3"--><!--android:textSize="@dimen/feed_item_timestamp"--><!--app:layout_constraintLeft_toLeftOf="@+id/txtName"--><!--app:layout_constraintTop_toBottomOf="@+id/txtName" />-->
+
+    <!--<TextView--><!--android:id="@+id/txtStatusMsg"--><!--android:layout_width="0dp"--><!--android:layout_height="wrap_content"--><!--android:text="Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum "--><!--android:layout_marginTop="8dp"--><!--app:layout_constraintTop_toBottomOf="@+id/imgProfilePic"--><!--app:layout_constraintLeft_toLeftOf="@+id/imgProfilePic"--><!--android:layout_marginRight="8dp"--><!--app:layout_constraintRight_toRightOf="parent"--><!--android:layout_marginEnd="8dp" />-->
+
+    <!--<android.support.v4.view.ViewPager--><!--android:id="@+id/viewPager"--><!--android:layout_width="0dp"--><!--android:layout_height="250dp"--><!--android:layout_marginTop="8dp"--><!--android:background="#eee"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintRight_toRightOf="parent"--><!--app:layout_constraintTop_toBottomOf="@+id/txtStatusMsg"></android.support.v4.view.ViewPager>-->
+
+    <!--<ImageView--><!--android:id="@+id/imageView4"--><!--android:layout_width="15dp"--><!--android:layout_height="15dp"--><!--android:layout_marginLeft="8dp"--><!--android:layout_marginStart="8dp"--><!--android:layout_marginTop="11dp"--><!--app:layout_constraintLeft_toRightOf="@+id/txtName"--><!--app:layout_constraintTop_toTopOf="parent"--><!--app:srcCompat="@mipmap/user2" />-->
+
+    <!--<View android:background="#405670"--><!--android:layout_width = "0dp"--><!--android:layout_height="1dp"--><!--app:layout_constraintTop_toBottomOf="@+id/pagerTabs"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--android:layout_marginLeft="8dp"--><!--android:layout_marginRight="8dp"--><!--app:layout_constraintRight_toRightOf="parent"--><!--android:id="@+id/view" />-->
+
+    <!--<TextView--><!--android:id="@+id/txtLocation"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:layout_marginLeft="8dp"--><!--android:layout_marginTop="8dp"--><!--android:paddingBottom="12dp"--><!--android:text="80 Likes • 3 Comments"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintTop_toBottomOf="@+id/view" />-->
+
+    <!--<ImageView--><!--android:id="@+id/imageView5"--><!--android:layout_width="60dp"--><!--android:layout_height="wrap_content"--><!--android:layout_marginTop="4dp"--><!--app:layout_constraintTop_toBottomOf="@+id/view"--><!--app:srcCompat="@drawable/helpfull"--><!--app:layout_constraintRight_toLeftOf="@+id/imageView6"--><!--android:layout_marginRight="3dp" />-->
+
+    <!--<ImageView--><!--android:id="@+id/imageView6"--><!--android:layout_width="75dp"--><!--android:layout_height="wrap_content"--><!--android:layout_marginTop="4dp"--><!--app:layout_constraintTop_toBottomOf="@+id/view"--><!--app:srcCompat="@drawable/comment"--><!--android:layout_marginRight="8dp"--><!--app:layout_constraintRight_toRightOf="parent" />-->
+
+    <!--<android.support.design.widget.TabLayout--><!--android:id="@+id/pagerTabs"--><!--android:layout_width="0dp"--><!--android:layout_height="30dp"--><!--android:layout_marginTop="0dp"--><!--android:visibility="visible"--><!--app:layout_constraintHorizontal_bias="0.0"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintRight_toRightOf="parent"--><!--app:layout_constraintTop_toBottomOf="@+id/viewPager"--><!--app:tabBackground="@drawable/tab_selector"--><!--app:tabGravity="center"--><!--app:tabIndicatorHeight="0dp"--><!--app:tabMaxWidth="10dp"></android.support.design.widget.TabLayout>-->
+
+
+    <!--</android.support.constraint.ConstraintLayout>-->
+
+
+    <!--<?xml version="1.0" encoding="utf-8"?>--><!--<LinearLayout--><!--xmlns:android="http://schemas.android.com/apk/res/android"--><!--xmlns:app="http://schemas.android.com/apk/res-auto"--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:layout_marginTop="15dp"--><!--xmlns:tools="http://schemas.android.com/tools"-->
+
+    <!--android:orientation="vertical">-->
+
+    <!--<LinearLayout--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:background="@color/white"--><!--android:layout_marginBottom="15dp"--><!--android:id="@+id/shareNewsLayout"-->
+
+    <!--&gt;--><!--<ImageView--><!--android:layout_width="40dp"--><!--android:layout_height="40dp"--><!--android:layout_marginTop="8dp"--><!--android:scaleType="fitXY"--><!--android:src="@drawable/gradient_background"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintTop_toTopOf="parent"--><!--app:layout_constraintBottom_toBottomOf="parent"--><!--android:layout_marginBottom="8dp"--><!--android:layout_marginStart="16dp"--><!--app:layout_constraintVertical_bias="0.0"--><!--android:id="@+id/imageView" />-->
+
+    <!--<TextView--><!--android:id="@+id/postNews"-->
+
+    <!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:layout_marginBottom="8dp"--><!--android:layout_marginStart="10dp"--><!--android:layout_marginTop="20dp"--><!--android:text="Share your news"--><!--app:layout_constraintBottom_toBottomOf="parent"--><!--app:layout_constraintLeft_toRightOf="@+id/imageView"--><!--app:layout_constraintTop_toTopOf="parent"-->
+
+    <!--app:layout_constraintVertical_bias="0.521"--><!--tools:fontFamily="sans-serif" />--><!--</LinearLayout>-->
+
+    <!--<LinearLayout--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:paddingTop="@dimen/feed_item_padding_top"--><!--android:background="@drawable/feed_item_rounded_corner"--><!--android:orientation="vertical">-->
+
+    <!--&lt;!&ndash;android:paddingTop="@dimen/feed_item_padding_top_bottom">&ndash;&gt;-->
+
+    <!--<LinearLayout--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:orientation="horizontal"--><!--android:paddingLeft="@dimen/feed_item_padding_left_right"--><!--android:paddingRight="@dimen/feed_item_padding_left_right">-->
+
+    <!--&lt;!&ndash;<com.android.volley.toolbox.NetworkImageView&ndash;&gt;--><!--&lt;!&ndash;android:id="@+id/profilePic"&ndash;&gt;--><!--&lt;!&ndash;android:layout_width="@dimen/feed_item_profile_pic"&ndash;&gt;--><!--&lt;!&ndash;android:layout_height="@dimen/feed_item_profile_pic"&ndash;&gt;--><!--&lt;!&ndash;android:scaleType="fitCenter" >&ndash;&gt;--><!--&lt;!&ndash;</com.android.volley.toolbox.NetworkImageView>&ndash;&gt;--><!--<ImageView--><!--android:id="@+id/imgProfilePic"--><!--android:layout_width="@dimen/feed_item_profile_pic"--><!--android:layout_height="@dimen/feed_item_profile_pic"--><!--android:scaleType="fitXY"--><!--android:src="@drawable/loginbg"></ImageView>-->
+
+    <!--<LinearLayout--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:orientation="vertical"--><!--android:paddingLeft="@dimen/feed_item_profile_info_padd">-->
+
+    <!--<TextView-->
+
+    <!--android:id="@+id/txtName"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:fontFamily="sans-serif-smallcaps"--><!--android:text="Sheryar Khan"--><!--android:textSize="@dimen/feed_item_profile_name"--><!--android:textStyle="bold" />-->
+
+
+    <!--<TextView--><!--android:id="@+id/txtTimeStamp"--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:text="20 mins ago"-->
+
+    <!--android:textSize="@dimen/feed_item_timestamp" />--><!--</LinearLayout>--><!--</LinearLayout>-->
+
+    <!--<TextView--><!--android:id="@+id/txtStatusMsg"--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:paddingBottom="5dp"--><!--android:paddingLeft="@dimen/feed_item_status_pad_left_right"--><!--android:paddingRight="@dimen/feed_item_status_pad_left_right"--><!--android:paddingTop="@dimen/feed_item_status_pad_top"--><!--android:text="Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum " />-->
+
+    <!--<TextView--><!--android:id="@+id/txtUrl"--><!--android:text="YOUTUBE.COM"--><!--android:layout_width="match_parent"--><!--android:layout_height="wrap_content"--><!--android:linksClickable="true"--><!--android:paddingBottom="10dp"--><!--android:paddingLeft="@dimen/feed_item_status_pad_left_right"--><!--android:paddingRight="@dimen/feed_item_status_pad_left_right"--><!--/>-->
+
+    <!--<android.support.v4.view.ViewPager--><!--android:id="@+id/viewPager"--><!--android:layout_width="match_parent"--><!--android:background="#eee"--><!--android:layout_height="250dp">--><!--</android.support.v4.view.ViewPager>-->
+
+    <!--<android.support.design.widget.TabLayout--><!--android:id="@+id/pagerTabs"--><!--android:visibility="gone"--><!--android:layout_height="wrap_content"--><!--android:layout_width="match_parent"--><!--app:tabBackground="@drawable/tab_selector"--><!--app:tabGravity="center"--><!--app:tabIndicatorHeight="0dp"--><!--app:tabMaxWidth="10dp"--><!--android:layout_marginTop="-12dp">--><!--</android.support.design.widget.TabLayout>-->
+
+    <!--&lt;!&ndash;<ImageView&ndash;&gt;--><!--&lt;!&ndash;android:id="@+id/imgPost"&ndash;&gt;--><!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;--><!--&lt;!&ndash;android:layout_height="250dp"&ndash;&gt;--><!--&lt;!&ndash;android:background="@color/white"&ndash;&gt;--><!--&lt;!&ndash;android:scaleType="fitCenter"&ndash;&gt;--><!--&lt;!&ndash;android:src="@drawable/q1bg"&ndash;&gt;--><!--&lt;!&ndash;/>&ndash;&gt;-->
+
+
+    <!--<android.support.constraint.ConstraintLayout--><!--android:layout_width="match_parent"--><!--android:layout_height="match_parent">-->
+
+    <!--<ImageButton--><!--android:id="@+id/imageButton3"--><!--style="@android:style/Widget.DeviceDefault.Light.ImageButton"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:layout_marginBottom="8dp"--><!--android:layout_marginRight="24dp"--><!--android:layout_marginTop="8dp"--><!--android:background="@color/white"--><!--app:layout_constraintBottom_toBottomOf="parent"--><!--app:layout_constraintRight_toRightOf="parent"--><!--app:layout_constraintTop_toTopOf="parent"--><!--app:srcCompat="@drawable/comment" />-->
+
+    <!--<ImageButton--><!--android:id="@+id/imageButton"--><!--style="@android:style/Widget.Material.Light.ImageButton"--><!--android:layout_width="wrap_content"--><!--android:layout_height="wrap_content"--><!--android:layout_marginBottom="8dp"--><!--android:layout_marginLeft="24dp"--><!--android:layout_marginTop="8dp"--><!--android:background="@android:color/white"--><!--app:layout_constraintBottom_toBottomOf="parent"--><!--app:layout_constraintLeft_toLeftOf="parent"--><!--app:layout_constraintTop_toTopOf="parent"--><!--app:layout_constraintVertical_bias="0.0"--><!--app:srcCompat="@drawable/helpfull"--><!--android:layout_marginStart="16dp" />-->
+
+    <!--<ImageButton--><!--android:id="@+id/imageButton2"--><!--style="@android:style/Widget.DeviceDefault.Light.ImageButton"--><!--android:layout_width="0dp"--><!--android:layout_height="wrap_content"--><!--android:layout_marginBottom="8dp"--><!--android:layout_marginTop="8dp"--><!--android:background="@color/white"--><!--app:layout_constraintBottom_toBottomOf="parent"--><!--app:layout_constraintTop_toTopOf="parent"--><!--app:srcCompat="@drawable/unhelpful"--><!--app:layout_constraintVertical_bias="0.0"--><!--app:layout_constraintLeft_toRightOf="@+id/imageButton"--><!--android:layout_marginLeft="16dp"--><!--android:layout_marginStart="16dp" />-->
+
+    <!--</android.support.constraint.ConstraintLayout>-->
+
+    <!--&lt;!&ndash;<info.androidhive.listviewfeed.FeedImageView&ndash;&gt;--><!--&lt;!&ndash;android:id="@+id/feedImage1"&ndash;&gt;--><!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;--><!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;--><!--&lt;!&ndash;android:background="@color/white"&ndash;&gt;--><!--&lt;!&ndash;android:scaleType="fitXY"&ndash;&gt;--><!--&lt;!&ndash;android:visibility="visible" />&ndash;&gt;-->
+
+
+    <!--</LinearLayout>-->
+
+    <!--</LinearLayout>-->

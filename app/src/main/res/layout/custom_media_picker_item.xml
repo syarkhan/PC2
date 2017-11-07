@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="1dp"
+    android:layout_marginStart="1dp"
+    android:layout_marginBottom="1dp"
+    android:layout_marginEnd="1dp"
+    >
+
+
+<ImageView
+    android:id="@+id/customImage"
+    android:layout_width="120dp"
+    android:layout_height="120dp"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+    <!--<VideoView-->
+        <!--android:id="@+id/customVideo"-->
+        <!--android:layout_width="120dp"-->
+        <!--android:layout_height="120dp"-->
+        <!--android:visibility="gone"-->
+        <!--android:layout_alignParentStart="true"-->
+        <!--android:layout_alignParentEnd="true"-->
+        <!--android:layout_centerInParent="true"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent" />-->
+
+    <CheckBox
+        android:id="@+id/checkBoxSelectImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="@color/green"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        app:layout_constraintBottom_toBottomOf="@+id/customImage"
+        app:layout_constraintRight_toRightOf="@+id/customImage" />
+
+    <!--<ImageView-->
+        <!--android:id="@+id/imageViewEnlarge"-->
+        <!--android:layout_width="20dp"-->
+        <!--android:layout_height="20dp"-->
+        <!--android:src="@drawable/ic_enlarge_image"-->
+        <!--app:layout_constraintLeft_toLeftOf="@+id/customImage"-->
+        <!--app:layout_constraintTop_toTopOf="@+id/customImage"-->
+        <!--android:layout_marginTop="6dp"-->
+        <!--android:layout_marginStart="6dp"-->
+        <!--/>-->
+
+    <View
+        android:id="@+id/imgVideoPlayButton"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:visibility="visible"
+        android:background="@android:drawable/ic_media_play"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="4dp"
+        app:layout_constraintLeft_toLeftOf="@+id/customImage"
+        app:layout_constraintBottom_toBottomOf="@+id/customImage"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/txtDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="duration"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:textSize="10sp"
+        app:layout_constraintLeft_toRightOf="@+id/imgVideoPlayButton"
+        app:layout_constraintBottom_toBottomOf="@+id/customImage"
+        android:layout_marginBottom="10dp" />
+
+
+</android.support.constraint.ConstraintLayout>

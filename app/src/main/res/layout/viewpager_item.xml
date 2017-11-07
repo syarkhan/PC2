@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <!--<ImageView-->
+    <!--android:id="@+id/imageView22"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent" />-->
+
+    <com.example.sheryarkhan.projectcity.utils.ImagesViewPager
+        android:id="@+id/imagesViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/play_video_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@mipmap/projectcitylogo"
+        android:visibility="gone" />
+
+    <!--<utils.VideosViewPager-->
+    <!--android:id="@+id/videosViewPager"-->
+    <!--android:layout_width="match_parent"-->
+
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentStart="true"-->
+    <!--android:layout_centerInParent="true"-->
+    <!--android:visibility="gone" />-->
+
+
+</RelativeLayout>

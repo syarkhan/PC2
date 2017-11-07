@@ -1,0 +1,54 @@
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:id="@+id/my_toolbar"
+        android:layout_height="45dp"
+        android:layout_width="match_parent"
+        android:layout_alignParentTop="true"
+        >
+
+        <android.support.design.widget.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:elevation="4dp"
+
+            >
+            <!--<android.support.design.widget.CollapsingToolbarLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:contentScrim="?attr/colorPrimary"
+                app:expandedTitleGravity="top"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">-->
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:tabIndicatorHeight="0dp"
+                >
+                <!--<android.support.design.widget.TabItem
+                    android:layout_width="30dp"
+                    android:layout_height="wrap_content"
+                    android:icon="@drawable/add_media_icon"
+                    app:tabTextColor="@color/white"
+ />-->
+
+                <android.support.design.widget.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:icon="@mipmap/projectcityicon"
+                    />
+
+                <android.support.design.widget.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:icon="@drawable/add_media_icon"
+
+                    />
+            </android.support.design.widget.TabLayout>
+           <!-- </android.support.design.widget.CollapsingToolbarLayout>-->
+        </android.support.design.widget.AppBarLayout>
+    </RelativeLayout>
+
+</merge>
