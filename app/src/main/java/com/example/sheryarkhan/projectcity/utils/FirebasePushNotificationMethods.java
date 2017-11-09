@@ -100,7 +100,7 @@ public class FirebasePushNotificationMethods {
         townAndMessage.put("postId", postId);
         VolleyService mVolleyService = new VolleyService(mResultCallback, context);
         mVolleyService.postDataVolley(Request.Method.POST,
-                Constants.protocol + Constants.IP + Constants.sendPostTownNotification,
+                Constants.protocol + Constants.IP + Constants.sendTownPostNotification,
                 new JSONObject(townAndMessage));
     }
 

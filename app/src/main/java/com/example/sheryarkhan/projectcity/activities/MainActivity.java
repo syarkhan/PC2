@@ -20,7 +20,15 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.FirebasePushNotificationMethods;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
 import com.example.sheryarkhan.projectcity.utils.ImageCompression;
@@ -38,12 +46,17 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +64,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.UUID;
 
+import data.Posts;
 import data.PostsPOJO;
 
 public class MainActivity extends AppCompatActivity {
@@ -67,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private boolean isLastItem = false;
-    private Map<String, Boolean> media = new HashMap<>();
+    private List<String> media = new ArrayList<>();
 
     private static Integer number_of_posts = 0;
 
@@ -310,6 +324,31 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void uploadPostDataToFirebase(final String txtPrimary, final String txtSecondary, final String editTextShareNews) {
+//        String URL = Constants.protocol + Constants.IP + "/addNewPost";
+//        Long timestamp = System.currentTimeMillis();
+//        Map<String, String> PostData = new HashMap<>();
+//        PostData.put("UserId", firebaseAuth.getCurrentUser().getUid());
+//        PostData.put("Location", txtPrimary);
+//        PostData.put("PostText", editTextShareNews);
+//        PostData.put("timestamp", timestamp.toString());
+//        PostData.put("Town", txtSecondary);
+//
+//
+//        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
+//            @Override
+//            public void onResponse(JSONObject response) {
+//                Log.d("volleyadd",response.toString());
+//            }
+//        }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                Log.d("VolleyError", error.toString());
+//            }
+//        });
+//
+//        RequestQueue queue = Volley.newRequestQueue(this);
+//        queue.add(jsonObjectRequest);
+
         SharedPreferences sharedPref = MainActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
         final String username = sharedPref.getString("username", "");
         //final String userid = sharedPref.getString("userid", "");
@@ -318,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
         String imageURI = sharedPref.getString("profilepicture", "");
 
         final String key = databaseReference.child("posts").push().getKey();
+
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
 
@@ -369,31 +409,74 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (medias.size() == 0) {
+            //MONGODB INSERT
+            String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
+            Long timestamp = System.currentTimeMillis();
+            Map<String, String> PostData = new HashMap<>();
+            PostData.put("UserId", userid);
+            PostData.put("Location", txtPrimary);
+            PostData.put("PostText", editTextShareNews);
+            PostData.put("timestamp", timestamp.toString());
+            PostData.put("Town", txtSecondary);
+
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Log.d("volleyadd",response.toString());
+                    FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d("VolleyError", error.toString());
+                }
+            });
+
+
+            RequestQueue queue = Volley.newRequestQueue(this);
+            queue.add(jsonObjectRequest);
+            jsonObjectRequest.setRetryPolicy(new RetryPolicy() {
+                @Override
+                public int getCurrentTimeout() {
+                    return 50000;
+                }
+
+                @Override
+                public int getCurrentRetryCount() {
+                    return 50000;
+                }
+
+                @Override
+                public void retry(VolleyError error) throws VolleyError {
+
+                }
+            });
+
+
+            //FIREBASE DB INSERT
             Long timeStamp = System.currentTimeMillis();
             PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
                     txtPrimary, txtSecondary, Collections.<String, Boolean>emptyMap());
 
 
-            Map<String, Object> childUpdates = new HashMap<>();
-            childUpdates.put("/posts/" + key, postsPOJO);
-            databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-
-//                    databaseReference.child("posts").child(key).addListenerForSingleValueEvent(new ValueEventListener() {
+//            Map<String, Object> childUpdates = new HashMap<>();
+//            childUpdates.put("/posts/" + key, postsPOJO);
+//            databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+//                @Override
+//                public void onSuccess(Void aVoid) {
+//
+//
+//                    //SEND NOTIFICATION TO USERS
+//                    //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
+//                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+//
+//                    //int number_of_posts=0;
+//                    queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
 //                        @Override
 //                        public void onDataChange(DataSnapshot dataSnapshot) {
-//                            final PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
-//                            //images = postsPOJO.getcontent_post();
-//
-//                            list.add(0, new PostsPOJO(postsPOJO.getuserid(),postsPOJO.getPostid(),
-//                                    postsPOJO.getprofilepicture(), postsPOJO.getusername(),
-//                                    postsPOJO.gettimestamp(), postsPOJO.getposttext(),
-//                                    postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
-//                                    , postsPOJO.getcontent_post(), postsPOJO.getLikes()));
-//
-//                            newsFeedRecyclerAdapter.notifyItemInserted(1);
-//                            newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
+//                            number_of_posts = dataSnapshot.getValue(Integer.class);
+//                            queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
 //                        }
 //
 //                        @Override
@@ -401,27 +484,9 @@ public class MainActivity extends AppCompatActivity {
 //
 //                        }
 //                    });
-
-                    //SEND NOTIFICATION TO USERS
-                    //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-                    FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews,MainActivity.this);
-
-                    //int number_of_posts=0;
-                    queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            number_of_posts = dataSnapshot.getValue(Integer.class);
-                            queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-
-                        }
-                    });
-
-                }
-            });
+//
+//                }
+//            });
 
         } else {
 
@@ -434,10 +499,11 @@ public class MainActivity extends AppCompatActivity {
                         isLastItem = true;
                     }
                     String uniqueId = UUID.randomUUID().toString();
-                    media.put("image:" + uniqueId, true);
-                    StorageReference mediaRef = storageRef.child("images/image:" + uniqueId);
+                    media.add("image:" + uniqueId);
+                    final StorageReference mediaRef = storageRef.child("images/image:" + uniqueId);
 
-                    mediaRef.putBytes(medias.get(i).getImageBytes()).addOnFailureListener(new OnFailureListener() {
+                    mediaRef.putBytes(medias.get(i).getImageBytes())
+                            .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             Log.d("storageerror", e.toString());
@@ -450,37 +516,65 @@ public class MainActivity extends AppCompatActivity {
 
                             if (isLastItem) {
 
-                                Long timeStamp = System.currentTimeMillis();
-                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
-                                        txtPrimary, txtSecondary,
-                                        media, Collections.<String, Boolean>emptyMap());
+                                //MONGODB INSERT
+                                String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
+                                Long timestamp = System.currentTimeMillis();
+                                Map<String, Object> PostData = new HashMap<>();
+                                PostData.put("UserId", userid);
+                                PostData.put("Location", txtPrimary);
+                                PostData.put("PostText", editTextShareNews);
+                                PostData.put("timestamp", timestamp.toString());
+                                PostData.put("Town", txtSecondary);
+                                PostData.put("ContentPost",media);
 
-                                Map<String, Object> childUpdates = new HashMap<>();
-                                childUpdates.put("/posts/" + key, postsPOJO);
-//                                mDatabase.child("posts").child(key).child("likes").setValue(0);
-                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+
+                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                                     @Override
-                                    public void onSuccess(Void aVoid) {
-
-                                        //SEND NOTIFICATION TO USERS
-                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews,MainActivity.this);
-
-                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
-                                            @Override
-                                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                                number_of_posts = dataSnapshot.getValue(Integer.class);
-                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
-                                            }
-
-                                            @Override
-                                            public void onCancelled(DatabaseError databaseError) {
-
-                                            }
-                                        });
-
+                                    public void onResponse(JSONObject response) {
+                                        Log.d("volleyadd",response.toString());
+                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        Log.d("VolleyError", error.toString());
                                     }
                                 });
+
+
+                                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+                                queue.add(jsonObjectRequest);
+                                //                                Long timeStamp = System.currentTimeMillis();
+//                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
+//                                        txtPrimary, txtSecondary,
+//                                        media, Collections.<String, Boolean>emptyMap());
+//
+//                                Map<String, Object> childUpdates = new HashMap<>();
+//                                childUpdates.put("/posts/" + key, postsPOJO);
+////                                mDatabase.child("posts").child(key).child("likes").setValue(0);
+//                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                    @Override
+//                                    public void onSuccess(Void aVoid) {
+//
+//                                        //SEND NOTIFICATION TO USERS
+//                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
+//                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+//
+//                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
+//                                            @Override
+//                                            public void onDataChange(DataSnapshot dataSnapshot) {
+//                                                number_of_posts = dataSnapshot.getValue(Integer.class);
+//                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
+//                                            }
+//
+//                                            @Override
+//                                            public void onCancelled(DatabaseError databaseError) {
+//
+//                                            }
+//                                        });
+//
+//                                    }
+//                                });
 
                             }
                         }
@@ -490,11 +584,6 @@ public class MainActivity extends AppCompatActivity {
                             double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                             Toast.makeText(MainActivity.this, progress + "% done", Toast.LENGTH_SHORT).show();
                         }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d("uploadError", e.toString());
-                        }
                     });
                 } else if (medias.get(i).getMediaType() == 2) { //VIDEO
 
@@ -503,7 +592,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     String uniqueId = UUID.randomUUID().toString();
-                    media.put("video:" + uniqueId, true);
+                    media.add("video:" + uniqueId);
                     StorageReference mediaRef = storageRef.child("images/video:" + uniqueId);
 
                     mediaRef.putBytes(medias.get(i).getVideoBytes()).addOnFailureListener(new OnFailureListener() {
@@ -516,40 +605,67 @@ public class MainActivity extends AppCompatActivity {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
                             if (isLastItem) {
+                                //MONGODB INSERT
+                                String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
+                                Long timestamp = System.currentTimeMillis();
+                                Map<String, Object> PostData = new HashMap<>();
+                                PostData.put("UserId", userid);
+                                PostData.put("Location", txtPrimary);
+                                PostData.put("PostText", editTextShareNews);
+                                PostData.put("timestamp", timestamp.toString());
+                                PostData.put("Town", txtSecondary);
+                                PostData.put("ContentPost",media);
 
-                                Long timeStamp = System.currentTimeMillis();
 
-                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
-                                        txtPrimary, txtSecondary,
-                                        media, Collections.<String, Boolean>emptyMap());
-
-                                Map<String, Object> childUpdates = new HashMap<>();
-                                childUpdates.put("/posts/" + key, postsPOJO);
-                                //mDatabase.child("posts").child(key).child("likes").setValue(0);
-                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                                     @Override
-                                    public void onSuccess(Void aVoid) {
-
-                                        //SEND NOTIFICATION TO USERS
-                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews,MainActivity.this);
-
-                                        //int number_of_posts=0;
-                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
-                                            @Override
-                                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                                number_of_posts = dataSnapshot.getValue(Integer.class);
-                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
-                                            }
-
-                                            @Override
-                                            public void onCancelled(DatabaseError databaseError) {
-
-                                            }
-                                        });
-
+                                    public void onResponse(JSONObject response) {
+                                        Log.d("volleyadd",response.toString());
+                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        Log.d("VolleyError", error.toString());
                                     }
                                 });
+
+
+                                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+                                queue.add(jsonObjectRequest);
+//                                Long timeStamp = System.currentTimeMillis();
+//
+//                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
+//                                        txtPrimary, txtSecondary,
+//                                        media, Collections.<String, Boolean>emptyMap());
+//
+//                                Map<String, Object> childUpdates = new HashMap<>();
+//                                childUpdates.put("/posts/" + key, postsPOJO);
+//                                //mDatabase.child("posts").child(key).child("likes").setValue(0);
+//                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                    @Override
+//                                    public void onSuccess(Void aVoid) {
+//
+//                                        //SEND NOTIFICATION TO USERS
+//                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
+//                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+//
+//                                        //int number_of_posts=0;
+//                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
+//                                            @Override
+//                                            public void onDataChange(DataSnapshot dataSnapshot) {
+//                                                number_of_posts = dataSnapshot.getValue(Integer.class);
+//                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
+//                                            }
+//
+//                                            @Override
+//                                            public void onCancelled(DatabaseError databaseError) {
+//
+//                                            }
+//                                        });
+//
+//                                    }
+//                                });
 
                             }
                         }

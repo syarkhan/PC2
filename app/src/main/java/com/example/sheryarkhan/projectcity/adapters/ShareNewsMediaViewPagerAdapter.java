@@ -18,8 +18,10 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +36,7 @@ public class ShareNewsMediaViewPagerAdapter extends PagerAdapter {
     Map<Integer,ArrayList<String>> hashMapMedia;
     LayoutInflater layoutInflater;
     Activity activity;
+    List<View> mList;
     //private Bitmap bitmap;
 
 
@@ -42,7 +45,19 @@ public class ShareNewsMediaViewPagerAdapter extends PagerAdapter {
         this.hashMapMedia = hashMapMedia;
         layoutInflater = LayoutInflater.from(context);
         activity = (Activity) context;
+        mList = new ArrayList<>();
+        //mList.addAll(hashMapMedia.values());
 
+    }
+
+    public void addView(View view, int index) {
+        mList.add(index, view);
+        notifyDataSetChanged();
+    }
+
+    public void removeView(int index) {
+        mList.remove(index);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -56,18 +71,39 @@ public class ShareNewsMediaViewPagerAdapter extends PagerAdapter {
     }
 
     @Override
+    public int getItemPosition(Object object) {
+        if (mList.contains((View) object)) {
+            return mList.indexOf((View) object);
+        } else {
+            return POSITION_NONE;
+        }
+    }
+
+    @Override
     public boolean isViewFromObject(View view, Object object) {
         return view == object;
     }
 
     @Override
-    public Object instantiateItem(ViewGroup container, int position) {
-        View itemView = layoutInflater.inflate(R.layout.media_viewpager_item,container,false);
+    public Object instantiateItem(final ViewGroup container, final int position) {
+        final View itemView = layoutInflater.inflate(R.layout.media_viewpager_item,container,false);
         final ImageView imageView = (ImageView) itemView.findViewById(R.id.postMediaImageView);
+        final ImageView imgClearMedia = (ImageView) itemView.findViewById(R.id.imgClearMedia);
+        mList.add(itemView);
 //        bitmap = BitmapFactory.decodeFile(hashMapMedia.get(position));
 //        imageView.setImageBitmap(bitmap);
 //        imageView.setAdjustViewBounds(true);
 
+//        imgClearMedia.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                //container.removeView(imageView);
+//
+//                container.removeView(itemView);
+//                removeView(position);
+//                HelperFunctions.getToastShort(context,"hello");
+//            }
+//        });
 
 
 

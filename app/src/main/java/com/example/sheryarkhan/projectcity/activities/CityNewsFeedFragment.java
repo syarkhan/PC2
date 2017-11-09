@@ -270,7 +270,7 @@ public class CityNewsFeedFragment extends Fragment {
 //                    });
 
                     oldestPostId = item.getKey();
-                    list.add(new PostsPOJO(postsPOJO.getCommentsCount(), postsPOJO.getuserid(), item.getKey(),
+                    list.add(new PostsPOJO(1,postsPOJO.getCommentsCount(), postsPOJO.getuserid(), item.getKey(),
                             null, null,
                             postsPOJO.gettimestamp(), postsPOJO.getposttext(),
                             postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
@@ -360,7 +360,7 @@ public class CityNewsFeedFragment extends Fragment {
                 final PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
                 //images = postsPOJO.getcontent_post();
 
-                list.add(0, new PostsPOJO(postsPOJO.getCommentsCount(),postsPOJO.getuserid(), dataSnapshot.getKey(),
+                list.add(0, new PostsPOJO(1,postsPOJO.getCommentsCount(),postsPOJO.getuserid(), dataSnapshot.getKey(),
                         postsPOJO.getprofilepicture(), postsPOJO.getusername(),
                         postsPOJO.gettimestamp(), postsPOJO.getposttext(),
                         postsPOJO.getlocation(), postsPOJO.getsecondarylocation()

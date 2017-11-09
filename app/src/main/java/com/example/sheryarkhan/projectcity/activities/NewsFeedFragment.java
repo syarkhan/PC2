@@ -1,6 +1,8 @@
 package com.example.sheryarkhan.projectcity.activities;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -16,7 +18,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.EndlessRecyclerOnScrollListener;
+import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.adapters.NewsFeedRecyclerAdapter;
@@ -28,17 +39,33 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import data.Posts;
 import data.PostsPOJO;
 
 
 public class NewsFeedFragment extends Fragment {
     private static final int TOTAL_ITEM_EACH_LOAD = 10;
+    private int currentPage = 0;
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView newsFeedRecyclerView;
@@ -56,6 +83,9 @@ public class NewsFeedFragment extends Fragment {
     private Map<String, Boolean> media = new HashMap<>();
     private IVolleyResult mResultCallback;
     private VolleyService mVolleyService;
+    private String URL;
+    private int page_num;
+    private String town;
 
     private LinearLayoutManager linearLayoutManager;
 
@@ -64,13 +94,29 @@ public class NewsFeedFragment extends Fragment {
     private String oldestPostId;
 
     boolean isFirstTime = true;
+
+
     int counter = 1;
     Query query;
     View view;
 
 
+    private List<Posts> postsList;
     public NewsFeedFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        page_num=0;
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        town = sharedPref.getString("town","");
+        URL = changePageNumberURL(page_num);
+        String iid = FirebaseInstanceId.getInstance().getToken();
+
+
+
     }
 
 
@@ -91,12 +137,31 @@ public class NewsFeedFragment extends Fragment {
 
         view = inflater.inflate(R.layout.fragment_news_feed, container, false);
 
+        list = new ArrayList<>();
+        postsList = new ArrayList<>();
+
+        newsFeedRecyclerView = (RecyclerView) view.findViewById(R.id.news_feed_recyclerview);
+
+        newsFeedRecyclerView.setHasFixedSize(true);
+        newsFeedRecyclerView.setItemViewCacheSize(20);
+        newsFeedRecyclerView.setDrawingCacheEnabled(true);
+        newsFeedRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        linearLayoutManager = new LinearLayoutManager(getActivity());
+        newsFeedRecyclerView.setLayoutManager(linearLayoutManager);
+        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postsList);
+        newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
+//        newsFeedRecyclerAdapter.notifyItemChanged(0);
+
+
         recyclerViewProgressBar = (ProgressBar) view.findViewById(R.id.recyclerViewProgressBar);
         txtNetworkError = (TextView) view.findViewById(R.id.txtNetworkError);
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
         final Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+
+
+        //setUpVolley();
         //
 //        Query user = databaseReference.orderByChild("")
 //        for(int i=0;i<locations.length;i++)
@@ -107,7 +172,7 @@ public class NewsFeedFragment extends Fragment {
 //            databaseReference.child("Posts").child(String.valueOf(i+3)).child("UserID").setValue(3);
 //        }
 
-        list = new ArrayList<>();
+
 
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipeRefreshLayout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -125,132 +190,96 @@ public class NewsFeedFragment extends Fragment {
             }
         });
 
-        newsFeedRecyclerView = (RecyclerView) view.findViewById(R.id.news_feed_recyclerview);
-
-        newsFeedRecyclerView.setHasFixedSize(true);
-        newsFeedRecyclerView.setItemViewCacheSize(20);
-        newsFeedRecyclerView.setDrawingCacheEnabled(true);
-        newsFeedRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
-        newsFeedRecyclerView.setLayoutManager(linearLayoutManager);
-        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(list);
-        newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
-        newsFeedRecyclerAdapter.notifyItemChanged(0);
-
-//        newsFeedRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
-//            @Override
-//            public void onLoadMore(int current_page) {
-//                //loadMoreData();
-//            }
-//        });
 
 
-        query = databaseReference.child("posts").orderByChild("secondarylocation").equalTo("Saddar Town");
-        //query1 = databaseReference.child("posts").orderByChild("timestamp").limitToLast(1);
 
 
-//        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
-//        connectedRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot snapshot) {
-//                boolean connected = snapshot.getValue(Boolean.class);
-//                if (connected) {
-//                    System.out.println("connected");
+        loadData();
+
+
+//        mVolleyService = new VolleyService(mResultCallback, getActivity());
+//        mVolleyService.getDataVolley(Request.Method.GET,
+//                Constants.protocol + Constants.IP + "/Posts");
+
+//        query = databaseReference.child("posts").orderByChild("secondarylocation").equalTo("Saddar Town");
+//        query.limitToFirst(TOTAL_ITEM_EACH_LOAD).addListenerForSingleValueEvent(new ValueEventListener() {
 //
-//                } else {
-//                    System.out.println("not connected");
-//                    Toast.makeText(NewsFeedActivity.this,"No Internet Connection!",Toast.LENGTH_SHORT).show();
-//                    recyclerViewProgressBar.setVisibility(View.GONE);
-//                    txtNetworkError.setVisibility(View.VISIBLE);
-//                }
-//            }
+//                    @Override
+//                    public void onDataChange(DataSnapshot dataSnapshot) {
 //
-//            @Override
-//            public void onCancelled(DatabaseError error) {
-//                System.err.println("Listener was cancelled");
-//            }
-//        });
-
-
-        query.limitToLast(15).addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-
-                for (DataSnapshot item : dataSnapshot.getChildren()) {
-                    final PostsPOJO postsPOJO = item.getValue(PostsPOJO.class);
-                    //images = postsPOJO.getcontent_post();
-                    Log.d("dadauserid", postsPOJO.getuserid());
-//                    Query userDetails = databaseReference.child("Users").child(postsPOJO.getuserid()).orderByChild(postsPOJO.getuserid()).limitToLast(1);
+//                        if(!dataSnapshot.hasChildren()){
+//                            Toast.makeText(getActivity(), "No more posts of Town", Toast.LENGTH_SHORT).show();
+//                            currentPage--;
+//                        }
+//                        for (DataSnapshot item : dataSnapshot.getChildren()) {
+//                            final PostsPOJO postsPOJO = item.getValue(PostsPOJO.class);
+//                            //images = postsPOJO.getcontent_post();
+//                            Log.d("dadauserid", postsPOJO.getuserid());
 //
-//                    userDetails.addListenerForSingleValueEvent(new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(DataSnapshot dataSnapshot) {
-//                            Log.d("dadauserid2",dataSnapshot.child("username").toString());
+//                            oldestPostId = item.getKey();
+//                            list.add(new PostsPOJO(currentPage, postsPOJO.getCommentsCount(), postsPOJO.getuserid(), item.getKey(),
+//                                    null, null,
+//                                    postsPOJO.gettimestamp(), postsPOJO.getposttext(),
+//                                    postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
+//                                    , postsPOJO.getcontent_post(), postsPOJO.getLikes()));
+//                            Log.d("datalist1", list.toString());
+//
 //                        }
 //
-//                        @Override
-//                        public void onCancelled(DatabaseError databaseError) {
+//                        Collections.reverse(list);
 //
+//                        for (final PostsPOJO item : list) {
+//                            databaseReference.child("Users").child(item.getuserid()).addListenerForSingleValueEvent(new ValueEventListener() {
+//                                @Override
+//                                public void onDataChange(DataSnapshot dataSnapshot) {
+//                                    String username = dataSnapshot.child("username").getValue().toString();
+//                                    if (dataSnapshot.child("profilepicture").getValue() == null) {
+//                                        //String profilepicture = "null;
+//                                    } else {
+//                                        String profilepicture = dataSnapshot.child("profilepicture").getValue().toString();
+//                                        list.get(list.indexOf(item)).setprofilepicture(profilepicture);
+//                                    }
+//                                    list.get(list.indexOf(item)).setusername(username);
+//                                    Log.d("datalist2", list.toString());
+//                                    newsFeedRecyclerAdapter.notifyDataSetChanged();
+////                            newsFeedRecyclerAdapter.notifyItemInserted(1);
+////                            newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
+//
+//                                }
+//
+//                                @Override
+//                                public void onCancelled(DatabaseError databaseError) {
+//
+//                                }
+//                            });
 //                        }
-//                    });
+//
+//                        recyclerViewProgressBar.setVisibility(View.GONE);
+//                        newsFeedRecyclerView.setVisibility(View.VISIBLE);
+//
+//                        //newsFeedRecyclerAdapter.notifyItemInserted(1);
+//                        //newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
+//
+//                        isFirstTime = false;//asdasd
+//
+//
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError databaseError) {
+//                    }
+//                });
 
-                    oldestPostId = item.getKey();
-                    list.add(new PostsPOJO(postsPOJO.getCommentsCount(),postsPOJO.getuserid(), item.getKey(),
-                            null, null,
-                            postsPOJO.gettimestamp(), postsPOJO.getposttext(),
-                            postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
-                            , postsPOJO.getcontent_post(), postsPOJO.getLikes()));
-                    Log.d("datalist1", list.toString());
-
-                }
-
-                Collections.reverse(list);
-
-                for (final PostsPOJO item : list) {
-                    databaseReference.child("Users").child(item.getuserid()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            String username = dataSnapshot.child("username").getValue().toString();
-                            if (dataSnapshot.child("profilepicture").getValue() == null) {
-                                //String profilepicture = "null;
-                            } else {
-                                String profilepicture = dataSnapshot.child("profilepicture").getValue().toString();
-                                list.get(list.indexOf(item)).setprofilepicture(profilepicture);
-                            }
-                            list.get(list.indexOf(item)).setusername(username);
-                            Log.d("datalist2", list.toString());
-                            newsFeedRecyclerAdapter.notifyDataSetChanged();
-//                            newsFeedRecyclerAdapter.notifyItemInserted(1);
-//                            newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
-
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-
-                        }
-                    });
-                }
-
-                recyclerViewProgressBar.setVisibility(View.GONE);
-                newsFeedRecyclerView.setVisibility(View.VISIBLE);
-
-                //newsFeedRecyclerAdapter.notifyItemInserted(1);
-                //newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
-
-                isFirstTime = false;//asdasd
-
-
-            }
-
+        newsFeedRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onLoadMore(int current_page) {
+                loadMoreData();
+
             }
         });
+        //loadData();
 
-        final boolean mIsLoading = false;
+        //final boolean mIsLoading = false;
 
 
         mChildListener = new ChildEventListener() {
@@ -261,7 +290,7 @@ public class NewsFeedFragment extends Fragment {
 
                 //images = postsPOJO.getcontent_post();
 
-                list.add(0, new PostsPOJO(postsPOJO.getCommentsCount(),postsPOJO.getuserid(), dataSnapshot.getKey(),
+                list.add(0, new PostsPOJO(currentPage, postsPOJO.getCommentsCount(), postsPOJO.getuserid(), dataSnapshot.getKey(),
                         postsPOJO.getprofilepicture(), postsPOJO.getusername(),
                         postsPOJO.gettimestamp(), postsPOJO.getposttext(),
                         postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
@@ -298,17 +327,93 @@ public class NewsFeedFragment extends Fragment {
         return view;
     }
 
+    private String changePageNumberURL(int page_num){
+        String townParam;
+        URI uri = null;
+        try {
+            uri = new URI(Constants.protocol ,null, Constants.IP, "/TownPosts/5&"+page_num+"&"+ town.replace("_"," "));
+            String request = uri.toASCIIString();
+            Log.d("urlencode",request);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            townParam = URLEncoder.encode(town.replace("_"," "),"UTF-8").replaceAll("\\+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError("UTF-8 is unknown");
+            // or 'throw new AssertionError("Impossible things are happening today. " +
+            //                              "Consider buying a lottery ticket!!");'
+        }
+
+        return Constants.protocol + Constants.IP + "/TownPosts/5&"+page_num+"&"+ townParam;
+    }
+
+    private void setUpVolley() {
+        mResultCallback = new IVolleyResult() {
+            @Override
+            public void notifySuccess(int requestType, JSONObject response) {
+                Log.d("volleydadasuccess", "Volley requester " + String.valueOf(requestType));
+                Log.d("volleydadasuccess", "Volley JSON GET" + response);
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                Gson gson = gsonBuilder.create();
+
+            }
+
+            @Override
+            public void notifyError(int requestType, VolleyError error) {
+                Log.d("volleydadaerror", "Volley requester " + String.valueOf(requestType));
+                Log.d("volleydadaerror", "Volley JSON GET" + "That didn't work! " + error.toString());
+            }
+        };
 
 
-//    private void setupBottomNavigationView(View view) {
-//
-//        FragmentManager fragmentManager = getFragmentManager();
-//        BottomNavigationViewEx bottomNavigationViewEx = (BottomNavigationViewEx) view.findViewById(R.id.my_toolbar_bottom);
-//        BottomNavigationViewHelper.setupBottomNavigationView(bottomNavigationViewEx,getActivity());
-//        Menu menu = bottomNavigationViewEx.getMenu();
-//        MenuItem menuItem = menu.getItem(ACTIVITY_NUM);
-//        menuItem.setChecked(true);
-//    }
+    }
+
+    private void loadMoreData() {
+        currentPage++;
+        page_num++;
+        URL = changePageNumberURL(page_num);
+        loadData();
+    }
+
+    private void loadData() {
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+                if(response.equals("false")){
+                    HelperFunctions.getToastShort(getActivity(),"No more data!");
+                }
+                else {
+                    GsonBuilder gsonBuilder = new GsonBuilder();
+                    Gson gson = gsonBuilder.create();
+
+                    List<Posts> list = gson.fromJson(response, new TypeToken<List<Posts>>() {
+                    }.getType());
+                    postsList.addAll(list);
+                    Log.d("volleyposts", postsList.toString());
+//                newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postsList);
+//                newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
+                    //newsFeedRecyclerAdapter.notifyItemChanged(0);
+                    newsFeedRecyclerAdapter.notifyDataSetChanged();
+                }
+                //newsFeedRecyclerAdapter.notifyItemInserted(1);
+                //newsFeedRecyclerAdapter.notifyItemRangeChanged(1,postsList.size());
+                //newsFeedRecyclerAdapter.notifyDataSetChanged();
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("VolleyError",error.toString());
+            }
+        });
+
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        queue.add(stringRequest);
+    }
+
 
 
     @Override

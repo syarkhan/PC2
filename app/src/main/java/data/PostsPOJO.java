@@ -100,11 +100,32 @@ public class PostsPOJO {
         this.location = location;
     }
 
-
-    //WITH LIKES CONSTRUCTOR
+    //WITHOUT postNumber CONSTRUCTOR
     public PostsPOJO(int commentsCount, String userid, String postid, String profilepicture, String username, Long timestamp,
                      String posttext, String location, String secondarylocation,
                      Map<String, Boolean> content_post, Map<String, Boolean> likes) {
+
+        this.commentsCount = commentsCount;
+        this.userid = userid;
+        this.postid = postid;
+        this.username = username;
+        this.timestamp = timestamp;
+        this.posttext = posttext;
+        this.location = location;
+        this.secondarylocation = secondarylocation;
+        this.profilepicture = profilepicture;
+        this.content_post = content_post;
+        this.likes = likes;
+
+    }
+
+
+    //WITH LIKES CONSTRUCTOR
+    public PostsPOJO(int postNumber, int commentsCount, String userid, String postid, String profilepicture, String username, Long timestamp,
+                     String posttext, String location, String secondarylocation,
+                     Map<String, Boolean> content_post, Map<String, Boolean> likes) {
+
+        this.postNumber = postNumber;
         this.commentsCount = commentsCount;
         this.userid = userid;
         this.postid = postid;
@@ -203,7 +224,7 @@ public class PostsPOJO {
     public String toString() {
         return "PostsPOJO{" +
                 "userid='" + userid + '\'' +
-                "postid='" + postid + '\'' +
+                ", postid='" + postid + '\'' +
                 ", username='" + username + '\'' +
                 ", timestamp=" + timestamp +
                 ", posttext='" + posttext + '\'' +

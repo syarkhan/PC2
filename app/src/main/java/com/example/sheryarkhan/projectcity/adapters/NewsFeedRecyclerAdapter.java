@@ -49,11 +49,13 @@ import com.google.firebase.storage.StorageReference;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import data.Posts;
 import data.PostsPOJO;
 
 /**
@@ -79,14 +81,14 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     private static final int TYPE_SHARE_NEWS = 1;
     private static final int TYPE_NEWS_POST = 2;
 
-    private List<PostsPOJO> newsFeedItemPOJOs = Collections.emptyList();
+    private List<Posts> newsFeedItemPOJOs;
 
     private DatabaseReference databaseReference;
 
     private IVolleyResult mResultCallback;
     private VolleyService mVolleyService;
 
-    public NewsFeedRecyclerAdapter(List<PostsPOJO> newsFeedItems) {
+    public NewsFeedRecyclerAdapter(List<Posts> newsFeedItems) {
         //this.context = context;
         this.newsFeedItemPOJOs = newsFeedItems;
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -296,28 +298,28 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
     private void setUpPictureView(final Context context, final OnlyPostImageViewHolder mholder, final int position) {
 
-        final PostsPOJO currentData = newsFeedItemPOJOs.get(position);
+        final Posts currentData = newsFeedItemPOJOs.get(position);
 
-        if (currentData.getcontent_post().size() == 0) {
+        if (currentData.getContentPost() == null) {
             mholder.viewPager.setVisibility(View.GONE);
             mholder.tabLayout.setVisibility(View.GONE);
-        } else if (currentData.getcontent_post().size() > 1) {
-            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+        } else if (currentData.getContentPost().size() > 1) {
+            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getContentPost());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.viewPager.setVisibility(View.VISIBLE);
             mholder.tabLayout.setVisibility(View.VISIBLE);
             mholder.tabLayout.setupWithViewPager(mholder.viewPager, true);
-        } else if (currentData.getcontent_post().size() == 1) {
-            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+        } else if (currentData.getContentPost().size() == 1) {
+            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getContentPost());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.tabLayout.setVisibility(View.GONE);
             mholder.viewPager.setVisibility(View.VISIBLE);
         }
 
-        mholder.txtName.setText(currentData.getusername());
+        mholder.txtName.setText(currentData.getUsername());
 
-        if (currentData.getprofilepicture() != null) {
-            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getprofilepicture());
+        if (currentData.getProfilePicture() != null) {
+            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getProfilePicture());
             filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
@@ -336,13 +338,13 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             });
         }
 
-        mholder.likesCount = currentData.getLikes() == null ? 0 : currentData.getLikes().size();
+        mholder.likesCount = currentData.getLikesCount();
         mholder.commentsCount = currentData.getCommentsCount();
 
-        if (currentData.getLikes().containsKey(firebaseUser.getUid())) {
-            mholder.btnHelpful.setTag("like_active");
-            mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-        }
+//        if (currentData.getLikes().containsKey(firebaseUser.getUid())) {
+//            mholder.btnHelpful.setTag("like_active");
+//            mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+//        }
 
         mholder.txtLikes.setText(mholder.likesCount + " " + context.getResources().getString(R.string.likes_dot));
         mholder.txtComments.setText(mholder.commentsCount + " " + context.getResources().getString(R.string.comments));
@@ -359,7 +361,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             @Override
             public void onClick(View view) {
                 MainActivity mainActivity = (MainActivity) context;
-                mainActivity.onCommentButtonSelected(currentData.getuserid(), mholder.likesCount, mholder.commentsCount, context.getString(R.string.main_activity), currentData.getPostid());
+                mainActivity.onCommentButtonSelected(currentData.getUserId(), mholder.likesCount, mholder.commentsCount, context.getString(R.string.main_activity), currentData.getPostId());
                 mainActivity.hideLayout();
             }
         });
@@ -382,7 +384,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
                     mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
                     mholder.btnHelpful.setTag("like");
                 }
-                databaseReference.child("posts/" + currentData.getPostid()).runTransaction(new Transaction.Handler() {
+                databaseReference.child("posts/" + currentData.getPostId()).runTransaction(new Transaction.Handler() {
                     @Override
                     public Transaction.Result doTransaction(MutableData mutableData) {
                         PostsPOJO postsPOJO = mutableData.getValue(PostsPOJO.class);
@@ -440,8 +442,8 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
                                     if(!firebaseUser.getUid().equals(postsPOJO.getuserid())) {
                                         //sendNotificationToUsers(postsPOJO.getPostid(), postsPOJO.getuserid());
-                                        FirebasePushNotificationMethods.sendPostLikeNotification(currentData.getuserid(),
-                                                firebaseUser.getUid(), currentData.getposttext(),currentData.getPostid(),context);
+                                        FirebasePushNotificationMethods.sendPostLikeNotification(currentData.getUserId(),
+                                                firebaseUser.getUid(), currentData.getPostText(),currentData.getPostId(),context);
                                     }
                                     Toast.makeText(context, "liked", Toast.LENGTH_SHORT).show();
                                 } else {
@@ -467,15 +469,15 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
         // Converting timestamp into X ago format
         CharSequence timeAgo = DateUtils.getRelativeTimeSpanString(
-                Long.parseLong(String.valueOf(currentData.gettimestamp())),
+                Long.parseLong(String.valueOf(currentData.getTimestamp())),
                 System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
 
         mholder.txtTimeStamp.setText(timeAgo);
-        mholder.txtLocation.setText(currentData.getlocation());
+        mholder.txtLocation.setText(currentData.getLocation());
 
-        mholder.txtSecondary.setText(currentData.getsecondarylocation());
+        mholder.txtSecondary.setText(currentData.getTown());
 
-        mholder.txtStatusMsg.setText(currentData.getposttext());
+        mholder.txtStatusMsg.setText(currentData.getPostText());
 
 
         mholder.imgProfilePic.setOnClickListener(new View.OnClickListener() {

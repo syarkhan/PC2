@@ -66,12 +66,12 @@ import data.PostsPOJO;
 
 public class PostNewsActivity extends AppCompatActivity {
 
-    private Button btnMedia, btnPostNews;
+    private Button btnMedia;
     private EditText editTextShareNews;
     private Uri mImageUri;
     private ViewPager mediaViewPager;
     private TabLayout mediaPagerTabs;
-    private TextView txtName, txtPrimary, txtSecondary, txtPostLocation;
+    private TextView txtName, txtPrimary, txtSecondary, txtPostLocation, txtPostNews;
     private ImageView imgClearLocations, imgProfilePic;
 
     private DatabaseReference databaseReference;
@@ -96,7 +96,7 @@ public class PostNewsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_news);
 
         btnMedia = (Button) findViewById(R.id.btnMedia);
-        btnPostNews = (Button) findViewById(R.id.btnPostNews);
+        txtPostNews = (TextView) findViewById(R.id.txtPostNews);
         editTextShareNews = (EditText) findViewById(R.id.editTextShareNews);
         txtName = (TextView) findViewById(R.id.txtName);
         txtPrimary = (TextView) findViewById(R.id.txtPrimary);
@@ -169,7 +169,7 @@ public class PostNewsActivity extends AppCompatActivity {
         });
 
 
-        btnPostNews.setOnClickListener(new View.OnClickListener() {
+        txtPostNews.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
@@ -562,6 +562,7 @@ public class PostNewsActivity extends AppCompatActivity {
                 ShareNewsMediaViewPagerAdapter viewPagerAdapter = new ShareNewsMediaViewPagerAdapter(PostNewsActivity.this, hashMap);
                 mediaViewPager.setAdapter(viewPagerAdapter);
                 mediaPagerTabs.setupWithViewPager(mediaViewPager, true);
+                mediaViewPager.setVisibility(View.VISIBLE);
 
             } else if (resultCode == RESULT_CANCELED) {
 

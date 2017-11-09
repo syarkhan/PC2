@@ -12,3 +12,5 @@ public interface IVolleyResult {
     void notifySuccess(int requestType,JSONObject response);
     void notifyError(int requestType,VolleyError error);
 }
+
+

@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
@@ -14,8 +16,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.PlayVideoActivity;
@@ -26,6 +33,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,7 +47,7 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
 
 
     Context context;
-    Map<String, Boolean> media;
+    List<String> media;
     int position;
     Activity activity;
     ImagesViewPager imagesViewPager;
@@ -73,7 +81,7 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
 
 
 
-    public void Init(Context context, Map<String, Boolean> media, int position, View view) {
+    public void Init(Context context, List<String> media, int position, View view) {
 
 
         this.context = context;
@@ -119,10 +127,10 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
 //        final RequestOptions options = new RequestOptions();
 //        options.diskCacheStrategy(DiskCacheStrategy.RESOURCE);
 
-        if(new ArrayList<>(media.keySet()).get(position).contains("image")){
+        if(media.get(position).contains("image")){
             //imagesViewPager.setClickable(true);
 
-            StorageReference filePath = storageReference.child("images").child(new ArrayList<>(media.keySet()).get(position));
+            StorageReference filePath = storageReference.child("images").child(media.get(position));
             filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
@@ -140,56 +148,42 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
                 }
             });
         }
-        else if(new ArrayList<>(media.keySet()).get(position).contains("video")){
+        else if(media.get(position).contains("video")){
             playImageView.setVisibility(VISIBLE);
-            //imagesViewPager.setBackgroundColor(getResources().getColor(R.color.black,null));
-            /*   GlideApp.with(context)
-                    .load(R.drawable.black_color)
-                    .error(R.color.link)
-                    .into(imagesViewPager);*/
-           /* StorageReference filePath = storageReference.child("images").child(new ArrayList<>(media.keySet()).get(position));
+
+            StorageReference filePath = storageReference.child("images").child(media.get(position));
             filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
-                    Bitmap bitmap = retrieveThumbnailFromVideo(String.valueOf(uri));
-                    Drawable thumbnail = new BitmapDrawable(getResources(),bitmap);
+                    //Bitmap bitmap = retrieveThumbnailFromVideo(String.valueOf(uri));
+                    //Drawable thumbnail = new BitmapDrawable(getResources(),bitmap);
 
+                    //imagesViewPager.setImageDrawable(thumbnail);
+                    RequestOptions myOptions = new RequestOptions()
+                            .centerCrop()
+                            .error(R.color.link);
                     try {
                         GlideApp.with(context)
-                                .load(thumbnail)
-                                .override(100,100)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                                .centerCrop()
-                                .error(R.color.link)
-                                .listener(new RequestListener<Drawable>() {
-                                    @Override
-                                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                        Log.d("imagegliderror",e.toString());
-                                        return false;
-                                    }
-
-                                    @Override
-                                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                        return false;
-                                    }
-                                }).into(imagesViewPager);
+                                .asBitmap()
+                                .apply(myOptions)
+                                .load(uri)
+                                .into(imagesViewPager);
                     } catch (Exception ex) {
                         Log.d("error", ex.toString());
                     }
-                    if (bitmap != null && !bitmap.isRecycled()) {
-                        bitmap.recycle();
-                        bitmap = null;
-                    }
+//                    if (bitmap != null && !bitmap.isRecycled()) {
+//                        bitmap.recycle();
+//                        bitmap = null;
+//                    }
                 }
             });
 
-*/        }
-
+        }
 
         playImageView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                String urlVideo = new ArrayList<>(media.keySet()).get(position);
+                String urlVideo = media.get(position);
                 Intent intent = new Intent(getContext(), PlayVideoActivity.class);
                 intent.putExtra("url",urlVideo);
                 context.startActivity(intent);
@@ -205,8 +199,8 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
 //
 //                context.startActivity(intent, optionsCompat.toBundle());
 
-                if(new ArrayList<>(media.keySet()).get(position).contains("image")) {
-                    String url = new ArrayList<>(media.keySet()).get(position);
+                if(media.get(position).contains("image")) {
+                    String url = media.get(position);
                     Intent intent = new Intent(context, PostImageDisplayActivity.class);
                     intent.putExtra("url", url);
                     ActivityOptionsCompat options = ActivityOptionsCompat.
@@ -214,8 +208,8 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
                                     imagesViewPager,
                                     "image");
                     context.startActivity(intent, options.toBundle());
-                }else if(new ArrayList<>(media.keySet()).get(position).contains("video")){
-                    String urlVideo = new ArrayList<>(media.keySet()).get(position);
+                }else if(media.get(position).contains("video")){
+                    String urlVideo = media.get(position);
                     Intent intent = new Intent(getContext(), PlayVideoActivity.class);
                     intent.putExtra("url",urlVideo);
                     context.startActivity(intent);

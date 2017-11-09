@@ -103,7 +103,7 @@ public class NotificationPostActivity extends AppCompatActivity {
                 }
                 else if(currentData.getcontent_post().size() > 1)
                 {
-                    postContentViewPagerAdapter = new PostContentViewPagerAdapter(NotificationPostActivity.this,currentData.getcontent_post());
+                    //postContentViewPagerAdapter = new PostContentViewPagerAdapter(NotificationPostActivity.this,currentData.getcontent_post());
                     viewPager.setAdapter(postContentViewPagerAdapter);
                     viewPager.setVisibility(View.VISIBLE);
                     tabLayout.setVisibility(View.VISIBLE);
@@ -111,7 +111,7 @@ public class NotificationPostActivity extends AppCompatActivity {
                 }
                 else if(currentData.getcontent_post().size() == 1)
                 {
-                    postContentViewPagerAdapter = new PostContentViewPagerAdapter(NotificationPostActivity.this,currentData.getcontent_post());
+                    //postContentViewPagerAdapter = new PostContentViewPagerAdapter(NotificationPostActivity.this,currentData.getcontent_post());
                     viewPager.setAdapter(postContentViewPagerAdapter);
                     tabLayout.setVisibility(View.GONE);
                     viewPager.setVisibility(View.VISIBLE);

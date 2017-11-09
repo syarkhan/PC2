@@ -10,7 +10,9 @@ import android.view.ViewGroup;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.utils.ImagesViewPager;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,12 +24,12 @@ public class PostContentViewPagerAdapter extends PagerAdapter {
 
 
     private Context context; //aa
-    private Map<String, Boolean> media = Collections.emptyMap();
+    private List<String> media = Collections.emptyList();
     private LayoutInflater layoutInflater;
     private Activity activity;
 
 
-    public PostContentViewPagerAdapter(Context context, Map<String, Boolean> media) {
+    public PostContentViewPagerAdapter(Context context, List<String> media) {
         this.context = context;
         this.media = media;
         layoutInflater = LayoutInflater.from(context);

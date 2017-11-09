@@ -18,10 +18,12 @@ public final class Constants {
     public static final String MY_PREFS_NAME = "UserData";
 
     public static String IP = "project-city.herokuapp.com";
-    //public static String IP = "192.168.0.104:3000";
+    //public static String IP = "192.168.8.104:3000";
+    //public static String IP = "10.0.0.2:3000";
     public static String protocol = "https://";
+    public static String addNewPost = "/addNewPost";
 
-    public static final String sendPostTownNotification = "/sendPostTownNotification";
+    public static final String sendTownPostNotification = "/sendTownPostNotification";
     public static final String sendPostLikeNotification = "/sendPostLikeNotification";
     public static final String sendPostCommentNotification = "/sendPostCommentNotification";
     public static final String sendPostCommentLikeNotification = "/sendPostCommentLikeNotification";
@@ -37,6 +39,7 @@ public final class Constants {
 
     public static final LatLngBounds QUETTA_BOUNDS = new LatLngBounds(
             new LatLng(33.5282, 72.7158), new LatLng(33.8613, 73.4134)); //SW,NE
+
 
 
 //    public static Map<String, List<String>> TOWN_DETAILS() {

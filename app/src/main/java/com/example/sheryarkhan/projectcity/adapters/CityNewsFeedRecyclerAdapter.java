@@ -193,13 +193,13 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
             mholder.viewPager.setVisibility(View.GONE);
             mholder.tabLayout.setVisibility(View.GONE);
         } else if (currentData.getcontent_post().size() > 1) {
-            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+            //postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.viewPager.setVisibility(View.VISIBLE);
             mholder.tabLayout.setVisibility(View.VISIBLE);
             mholder.tabLayout.setupWithViewPager(mholder.viewPager, true);
         } else if (currentData.getcontent_post().size() == 1) {
-            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+            //postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.tabLayout.setVisibility(View.GONE);
             mholder.viewPager.setVisibility(View.VISIBLE);
