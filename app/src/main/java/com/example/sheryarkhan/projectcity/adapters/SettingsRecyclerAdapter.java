@@ -19,6 +19,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.LoginActivity;
+import com.example.sheryarkhan.projectcity.activities.MainActivity;
 import com.example.sheryarkhan.projectcity.activities.NotificationPostActivity;
 import com.example.sheryarkhan.projectcity.activities.ProfileActivity;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -143,6 +144,9 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
                 }*/
                 if(mholder.getAdapterPosition() == 1){
                     //Notification
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.loadSettingNotificationFragment();
+                    mainActivity.hideLayout();
                 }
                 else if(mholder.getAdapterPosition() == 2 ){
                     //Change Password
