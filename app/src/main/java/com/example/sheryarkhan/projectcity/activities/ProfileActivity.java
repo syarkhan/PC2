@@ -68,7 +68,8 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
     private ConstraintLayout constraintLayoutScroll;
     private ProgressBar progressBar;
     //private ImageView btnUploadImage;
-    private Button btnLogout, btnEditProfile;
+    private TextView  btnEditProfile;
+    private TextView btnBack;
     private static final int REQUEST_OPEN_RESULT_CODE = 0;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private Uri mImageUri;
@@ -114,7 +115,7 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
         txtAbout = (TextView) findViewById(R.id.txtAbout);
         txtProfileBio = (TextView) findViewById(R.id.txtProfileBio);
         txtTotalPosts = (TextView) findViewById(R.id.txtTotalPosts);
-
+        btnBack = (TextView) findViewById(R.id.btnBack);
 
         constraintLayoutScroll = (ConstraintLayout)findViewById(R.id.constraintLayoutScroll);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
@@ -177,37 +178,42 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
             }
         });
 
-
-
-        btnEditProfile = (Button) findViewById(R.id.btnEditProfile);
-
-        btnLogout = (Button) findViewById(R.id.btnLogout);
-
-        btnLogout.setOnClickListener(new View.OnClickListener() {
+        btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-
-                //FirebaseUser user = firebaseAuth.getCurrentUser();
-
-                FirebaseMessaging.getInstance().unsubscribeFromTopic(town);
-                FirebaseMessaging.getInstance().unsubscribeFromTopic("user_"+firebaseAuth.getCurrentUser().getUid());
-
-
-                //databaseReference.child(user.getUid()).child("status").setValue(false);
-                firebaseAuth.signOut();
-
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.clear();
-                editor.apply();
-                startActivity(new Intent(ProfileActivity.this, LoginActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                finish();
-
-//                finish();
-//                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-//                startActivity(intent);
+            public void onClick(View v) {
+                onBackPressed();
             }
         });
+
+        btnEditProfile = (TextView) findViewById(R.id.btnEditProfile);
+
+//        btnLogout = (Button) findViewById(R.id.btnLogout);
+
+//        btnLogout.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                //FirebaseUser user = firebaseAuth.getCurrentUser();
+//
+//                FirebaseMessaging.getInstance().unsubscribeFromTopic(town);
+//                FirebaseMessaging.getInstance().unsubscribeFromTopic("user_"+firebaseAuth.getCurrentUser().getUid());
+//
+//
+//                //databaseReference.child(user.getUid()).child("status").setValue(false);
+//                firebaseAuth.signOut();
+//
+//                SharedPreferences.Editor editor = sharedPref.edit();
+//                editor.clear();
+//                editor.apply();
+//                startActivity(new Intent(ProfileActivity.this, LoginActivity.class)
+//                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+//                finish();
+//
+////                finish();
+////                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+////                startActivity(intent);
+//            }
+//        });
 
 
         btnEditProfile.setOnClickListener(new View.OnClickListener() {

@@ -57,6 +57,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
     TextView txtLocation;
     TextView txtUpdateProfile;
+    TextView txtCancel;
     ImageView btnUploadImage, imgUser;
     EditText editTextName, editTextInfo;
     private static final int REQUEST_OPEN_RESULT_CODE_FOR_TOWN = 10;
@@ -90,13 +91,13 @@ public class EditProfileActivity extends AppCompatActivity {
 
         txtLocation = (TextView) findViewById(R.id.txtLocation);
         txtUpdateProfile = (TextView) findViewById(R.id.btnUpdateProfile);
-
+//        txtCancel = (TextView)
         imgUser = (ImageView) findViewById(R.id.imgUser);
 
         btnUploadImage = (ImageView) findViewById(R.id.btnUploadImage);
         editTextName = (EditText) findViewById(R.id.editTextName);
         editTextInfo = (EditText) findViewById(R.id.editTextInfo);
-
+        txtCancel = (TextView) findViewById(R.id.txtCancel);
 
 
         try {
@@ -140,6 +141,12 @@ public class EditProfileActivity extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError databaseError) {
 
+            }
+        });
+        txtCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
             }
         });
 

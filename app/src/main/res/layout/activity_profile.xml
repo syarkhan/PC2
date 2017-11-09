@@ -15,16 +15,20 @@
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyle"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="63dp"
+        android:layout_height="63dp"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/scrollViewMain"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintDimensionRatio="50" />
 
     <ScrollView
         android:id="@+id/scrollViewMain"
@@ -33,18 +37,98 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
         <android.support.constraint.ConstraintLayout
             android:id="@+id/constraintLayoutScroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginBottom="0dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/feed_item_rounded_corner"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:layout_marginTop="0dp"
+            android:background="@color/white"
             android:visibility="gone">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar3"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:background="@drawable/feed_item_rounded_corner"
+                android:theme="?attr/actionBarTheme"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginLeft="-4dp"
+                android:layout_marginRight="-4dp"
+                android:layout_marginTop="-4dp">
+
+                <android.support.constraint.ConstraintLayout
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/btnEditProfile"
+                        style="@android:style/Widget.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginTop="0dp"
+                        android:background="@color/white"
+                        android:text="Edit Profile"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="14sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.5" />
+
+                    <TextView
+                        android:id="@+id/btnBack"
+                        style="@android:style/Widget.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginLeft="0dp"
+                        android:layout_marginTop="0dp"
+                        android:background="@color/white"
+                        android:text="Back"
+                        android:textAlignment="viewStart"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="14sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.5" />
+
+                    <TextView
+                        android:id="@+id/textView8"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Profile"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintHorizontal_bias="0.469"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.5" />
+
+                </android.support.constraint.ConstraintLayout>
+
+            </android.support.v7.widget.Toolbar>
 
             <!--<EditText-->
             <!--android:id="@+id/txtChangeEmail"-->
@@ -104,36 +188,22 @@
                 android:id="@+id/constraintLayoutHeader"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="0dp"
+                android:layout_marginRight="0dp"
                 android:background="@color/cardview_light_background"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginTop="8dp">
-
-                <Button
-                    android:id="@+id/btnEditProfile"
-                    style="@android:style/Widget.Button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/feed_item_rounded_corner"
-                    android:elevation="1dp"
-                    android:paddingLeft="20dp"
-                    android:paddingRight="20dp"
-                    android:text="Edit Profile"
-                    android:textColor="?attr/editTextColor"
-                    android:textSize="12sp"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintHorizontal_bias="0.5"
+                android:layout_marginTop="0dp"
+                app:layout_constraintTop_toBottomOf="@+id/toolbar3">
 
                 <ImageView
                     android:id="@+id/imgUser"
-                    android:layout_width="142dp"
-                    android:layout_height="129dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_marginTop="24dp"
                     android:visibility="visible"
+                    app:layout_constraintDimensionRatio="50"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -145,7 +215,7 @@
 
                 <ImageView
                     android:id="@+id/btnUploadImage"
-                    android:layout_width="38dp"
+                    android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_marginBottom="8dp"
                     android:layout_marginEnd="7dp"
@@ -154,20 +224,8 @@
                     android:scaleType="centerCrop"
                     app:layout_constraintBottom_toTopOf="@+id/txtUsername"
                     app:layout_constraintRight_toRightOf="@+id/imgUser"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.85"
                     app:srcCompat="@mipmap/uploadphoto2"
                     tools:layout_constraintRight_creator="1" />
-
-                <Button
-                    android:id="@+id/btnLogout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginStart="8dp"
-                    android:text="Logout"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/txtUsername"
@@ -178,9 +236,9 @@
                     android:layout_marginRight="8dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:text="Faizan Ahmed Khan"
+                    android:text="Your Full Name"
                     android:textColor="?attr/actionMenuTextColor"
-                    android:textSize="18sp"
+                    android:textSize="24sp"
                     android:textStyle="bold"
                     app:layout_constraintHorizontal_bias="0.502"
                     app:layout_constraintLeft_toLeftOf="parent"
@@ -197,8 +255,9 @@
                     android:layout_marginRight="8dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:text="Khayaban-e-Monim, Karachi"
+                    android:text="Your location"
                     android:textColor="@color/common_google_signin_btn_text_light_default"
+                    android:textSize="18sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_bias="0.502"
                     app:layout_constraintLeft_toLeftOf="parent"
@@ -212,13 +271,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="24dp"
                 android:background="@color/cardview_light_background"
                 app:layout_constraintBottom_toTopOf="@+id/constraintLayoutBody"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraintLayoutHeader"
-                app:layout_constraintHorizontal_bias="0.0">
+                app:layout_constraintTop_toBottomOf="@+id/constraintLayoutHeader">
 
                 <TextView
                     android:id="@+id/txtPointsValue"
@@ -231,6 +293,7 @@
                     android:layout_marginTop="8dp"
                     android:text="204"
                     android:textColor="@color/colorPrimary"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/txtPoints"
                     app:layout_constraintHorizontal_bias="0.36"
@@ -248,6 +311,7 @@
                     android:layout_marginRight="8dp"
                     android:layout_marginStart="8dp"
                     android:text="Points"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_bias="0.35"
@@ -260,13 +324,13 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     app:layout_constraintGuide_percent="0.5"
-                    tools:layout_editor_absoluteX="160dp"
-                    tools:layout_editor_absoluteY="8dp" />
+                    tools:layout_editor_absoluteX="0dp"
+                    tools:layout_editor_absoluteY="0dp" />
 
                 <Button
                     android:id="@+id/btnBadge"
-                    android:layout_width="45dp"
-                    android:layout_height="wrap_content"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_marginBottom="4dp"
                     android:layout_marginEnd="8dp"
                     android:layout_marginLeft="8dp"
@@ -277,9 +341,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:layout_editor_absoluteX="127dp"
-                    tools:layout_editor_absoluteY="6dp" />
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/txtTotalPosts"
@@ -292,6 +354,7 @@
                     android:layout_marginTop="8dp"
                     android:text="2K"
                     android:textColor="@color/colorPrimary"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/textView11"
                     app:layout_constraintHorizontal_bias="0.64"
@@ -310,6 +373,7 @@
                     android:layout_marginRight="8dp"
                     android:layout_marginStart="8dp"
                     android:text="Posts"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_bias="0.66"
@@ -321,20 +385,25 @@
                 android:id="@+id/constraintLayoutBody"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="32dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="16dp"
                 android:background="@color/cardview_light_background"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraintLayoutPoints"
-                android:layout_marginTop="16dp"
-                app:layout_constraintHorizontal_bias="0.0">
+                app:layout_constraintTop_toBottomOf="@+id/constraintLayoutPoints">
 
                 <TextView
                     android:id="@+id/txtAbout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:text="About Sohaib"
                     android:textColor="@color/timestamp"
@@ -347,125 +416,127 @@
                     android:id="@+id/txtProfileBio"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginEnd="16dp"
                     android:layout_marginRight="16dp"
-                    android:layout_marginTop="0dp"
                     android:text="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. "
                     android:textSize="14sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintLeft_toLeftOf="@+id/txtAbout"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/txtAbout" />
 
-                <View
-                    android:id="@+id/view"
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="32dp"
-                    android:background="#eee"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txtProfileBio" />
+                <!--<View-->
+                <!--android:id="@+id/view"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="1dp"-->
+                <!--android:layout_marginEnd="8dp"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--android:layout_marginRight="8dp"-->
+                <!--android:layout_marginStart="8dp"-->
+                <!--android:layout_marginTop="32dp"-->
+                <!--android:background="#eee"-->
+                <!--app:layout_constraintHorizontal_bias="0.0"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent"-->
+                <!--app:layout_constraintRight_toRightOf="parent"-->
+                <!--app:layout_constraintTop_toBottomOf="@+id/txtProfileBio" />-->
 
-                <ImageView
-                    android:id="@+id/imageView6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    app:layout_constraintTop_toBottomOf="@+id/view"
-                    app:srcCompat="@drawable/ic_search"
-                    android:layout_marginLeft="8dp"
-                    app:layout_constraintLeft_toLeftOf="parent" />
+                <!--<ImageView-->
+                <!--android:id="@+id/imageView6"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginTop="25dp"-->
+                <!--app:layout_constraintTop_toBottomOf="@+id/view"-->
+                <!--app:srcCompat="@drawable/ic_search"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent" />-->
 
-                <TextView
-                    android:id="@+id/txtProfileLocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="2dp"
-                    android:text="Karachi, Pakistan."
-                    app:layout_constraintLeft_toRightOf="@+id/imageView6"
-                    app:layout_constraintTop_toTopOf="@+id/imageView6" />
+                <!--<TextView-->
+                <!--android:id="@+id/txtProfileLocation"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginLeft="16dp"-->
+                <!--android:layout_marginStart="16dp"-->
+                <!--android:layout_marginTop="2dp"-->
+                <!--android:text="Karachi, Pakistan."-->
+                <!--app:layout_constraintLeft_toRightOf="@+id/imageView6"-->
+                <!--app:layout_constraintTop_toTopOf="@+id/imageView6" />-->
 
-                <View
-                    android:id="@+id/view1"
-                    android:layout_width="330dp"
-                    android:layout_height="1dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="16dp"
-                    android:background="#eee"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txtProfileLocation" />
+                <!--<View-->
+                <!--android:id="@+id/view1"-->
+                <!--android:layout_width="330dp"-->
+                <!--android:layout_height="1dp"-->
+                <!--android:layout_marginEnd="8dp"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--android:layout_marginRight="8dp"-->
+                <!--android:layout_marginStart="8dp"-->
+                <!--android:layout_marginTop="16dp"-->
+                <!--android:background="#eee"-->
+                <!--app:layout_constraintHorizontal_bias="1.0"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent"-->
+                <!--app:layout_constraintRight_toRightOf="parent"-->
+                <!--app:layout_constraintTop_toBottomOf="@+id/txtProfileLocation" />-->
 
-                <ImageView
-                    android:id="@+id/imageView7"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_search"
-                    tools:layout_editor_absoluteY="224dp"
-                    android:layout_marginLeft="8dp"
-                    app:layout_constraintLeft_toLeftOf="parent" />
+                <!--<ImageView-->
+                <!--android:id="@+id/imageView7"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--app:srcCompat="@drawable/ic_search"-->
+                <!--tools:layout_editor_absoluteY="224dp"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent" />-->
 
-                <TextView
-                    android:id="@+id/txtProfileEducation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="2dp"
-                    android:text="SZABIST, Karachi."
-                    app:layout_constraintLeft_toRightOf="@+id/imageView7"
-                    app:layout_constraintTop_toTopOf="@+id/imageView7" />
+                <!--<TextView-->
+                <!--android:id="@+id/txtProfileEducation"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginLeft="16dp"-->
+                <!--android:layout_marginStart="16dp"-->
+                <!--android:layout_marginTop="2dp"-->
+                <!--android:text="SZABIST, Karachi."-->
+                <!--app:layout_constraintLeft_toRightOf="@+id/imageView7"-->
+                <!--app:layout_constraintTop_toTopOf="@+id/imageView7" />-->
 
 
-                <View
-                    android:id="@+id/view2"
-                    android:layout_width="330dp"
-                    android:layout_height="1dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="16dp"
-                    android:background="#eee"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/txtProfileEducation" />
+                <!--<View-->
+                <!--android:id="@+id/view2"-->
+                <!--android:layout_width="330dp"-->
+                <!--android:layout_height="1dp"-->
+                <!--android:layout_marginEnd="8dp"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--android:layout_marginRight="8dp"-->
+                <!--android:layout_marginStart="8dp"-->
+                <!--android:layout_marginTop="16dp"-->
+                <!--android:background="#eee"-->
+                <!--app:layout_constraintHorizontal_bias="1.0"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent"-->
+                <!--app:layout_constraintRight_toRightOf="parent"-->
+                <!--app:layout_constraintTop_toBottomOf="@+id/txtProfileEducation" />-->
 
-                <ImageView
-                    android:id="@+id/imageView8"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginTop="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/view2"
-                    app:srcCompat="@drawable/ic_search"
-                    app:layout_constraintVertical_bias="0.0"
-                    android:layout_marginLeft="8dp"
-                    app:layout_constraintLeft_toLeftOf="parent" />
+                <!--<ImageView-->
+                <!--android:id="@+id/imageView8"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginBottom="8dp"-->
+                <!--android:layout_marginTop="16dp"-->
+                <!--app:layout_constraintBottom_toBottomOf="parent"-->
+                <!--app:layout_constraintTop_toBottomOf="@+id/view2"-->
+                <!--app:srcCompat="@drawable/ic_search"-->
+                <!--app:layout_constraintVertical_bias="0.0"-->
+                <!--android:layout_marginLeft="8dp"-->
+                <!--app:layout_constraintLeft_toLeftOf="parent" />-->
 
-                <TextView
-                    android:id="@+id/txtProfileWork"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="2dp"
-                    android:text="Umbra Studios."
-                    app:layout_constraintLeft_toRightOf="@+id/imageView8"
-                    app:layout_constraintTop_toTopOf="@+id/imageView8" />
+                <!--<TextView-->
+                <!--android:id="@+id/txtProfileWork"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginLeft="16dp"-->
+                <!--android:layout_marginStart="16dp"-->
+                <!--android:layout_marginTop="2dp"-->
+                <!--android:text="Umbra Studios."-->
+                <!--app:layout_constraintLeft_toRightOf="@+id/imageView8"-->
+                <!--app:layout_constraintTop_toTopOf="@+id/imageView8" />-->
 
 
             </android.support.constraint.ConstraintLayout>
