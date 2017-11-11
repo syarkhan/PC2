@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Posts {
+public class Post {
 
     @SerializedName("_id")
     @Expose
@@ -30,13 +30,33 @@ public class Posts {
     @Expose
     private List<String> contentPost = null;
 
-    @SerializedName("Username")
-    @Expose
-    private String username;
 
-    @SerializedName("ProfilePicture")
+
+    @SerializedName("LikesCount")
     @Expose
-    private String profilePicture;
+    private int likesCount;
+
+    @SerializedName("Likes")
+    @Expose
+    private List<String> likes = null;
+
+    @SerializedName("CommentsCount")
+    @Expose
+    private int commentsCount;
+
+    @SerializedName("UserInfo")
+    @Expose
+    private UserInfo userInfo;
+
+
+
+    public UserInfo getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
+    }
 
     public int getLikesCount() {
         return likesCount;
@@ -62,17 +82,7 @@ public class Posts {
         this.commentsCount = commentsCount;
     }
 
-    @SerializedName("LikesCount")
-    @Expose
-    private int likesCount;
 
-    @SerializedName("Likes")
-    @Expose
-    private List<String> likes = null;
-
-    @SerializedName("CommentsCount")
-    @Expose
-    private int commentsCount;
 
     public String getPostId() {
         return postId;
@@ -130,25 +140,9 @@ public class Posts {
         this.contentPost = contentPost;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getProfilePicture() {
-        return profilePicture;
-    }
-
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture;
-    }
-
     @Override
     public String toString() {
-        return "Posts{" +
+        return "Post{" +
                 "postid='" + postId + '\'' +
                 ", userId='" + userId + '\'' +
                 ", postText='" + postText + '\'' +
@@ -158,4 +152,31 @@ public class Posts {
                 ", contentPost=" + contentPost +
                 '}';
     }
+    public class UserInfo {
+
+        @SerializedName("Username")
+        @Expose
+        private String username;
+        @SerializedName("ProfilePicture")
+        @Expose
+        private String profilePicture;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getProfilePicture() {
+            return profilePicture;
+        }
+
+        public void setProfilePicture(String profilePicture) {
+            this.profilePicture = profilePicture;
+        }
+
+    }
+
 }

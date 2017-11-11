@@ -17,9 +17,9 @@ public class User {
     @SerializedName("Username")
     @Expose
     private String username;
-    @SerializedName("DateOfjoining")
+    @SerializedName("DateOfJoining")
     @Expose
-    private String dateOfjoining;
+    private String dateOfJoining;
     @SerializedName("Email")
     @Expose
     private String email;
@@ -38,9 +38,29 @@ public class User {
     @SerializedName("City")
     @Expose
     private String city;
-    @SerializedName("NumberOfPosts")
+    @SerializedName("TotalNumberOfPosts")
     @Expose
-    private String numberOfPosts;
+    private String totalNumberOfPosts;
+    @SerializedName("Points")
+    @Expose
+    private String points;
+
+    public String getPoints() {
+        return points;
+    }
+
+    public void setPoints(String points) {
+        this.points = points;
+    }
+
+    public String getTotalNumberOfPosts() {
+        return totalNumberOfPosts;
+    }
+
+    public void setTotalNumberOfPosts(String totalNumberOfPosts) {
+        this.totalNumberOfPosts = totalNumberOfPosts;
+    }
+
 
     public String getId() {
         return id;
@@ -66,12 +86,12 @@ public class User {
         this.username = username;
     }
 
-    public String getDateOfjoining() {
-        return dateOfjoining;
+    public String getDateOfJoining() {
+        return dateOfJoining;
     }
 
-    public void setDateOfjoining(String dateOfjoining) {
-        this.dateOfjoining = dateOfjoining;
+    public void setDateOfJoining(String dateOfjoining) {
+        this.dateOfJoining = dateOfjoining;
     }
 
     public String getEmail() {
@@ -122,12 +142,22 @@ public class User {
         this.city = city;
     }
 
-    public String getNumberOfPosts() {
-        return numberOfPosts;
-    }
 
-    public void setNumberOfPosts(String numberOfPosts) {
-        this.numberOfPosts = numberOfPosts;
-    }
 
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", userId='" + userId + '\'' +
+                ", username='" + username + '\'' +
+                ", dateOfJoining='" + dateOfJoining + '\'' +
+                ", email='" + email + '\'' +
+                ", town='" + town + '\'' +
+                ", profilePicture='" + profilePicture + '\'' +
+                ", status='" + status + '\'' +
+                ", bio='" + bio + '\'' +
+                ", city='" + city + '\'' +
+                ", numberOfPosts='" + totalNumberOfPosts + '\'' +
+                '}';
+    }
 }

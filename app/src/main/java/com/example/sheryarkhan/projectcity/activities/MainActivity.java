@@ -2,9 +2,7 @@ package com.example.sheryarkhan.projectcity.activities;
 
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
@@ -20,35 +18,30 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.FirebasePushNotificationMethods;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
 import com.example.sheryarkhan.projectcity.utils.ImageCompression;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.adapters.SectionsPagerAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 
 import org.json.JSONObject;
@@ -57,7 +50,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +57,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.UUID;
 
-import data.Posts;
 import data.PostsPOJO;
 
 public class MainActivity extends AppCompatActivity {
@@ -367,12 +358,15 @@ public class MainActivity extends AppCompatActivity {
 //        RequestQueue queue = Volley.newRequestQueue(this);
 //        queue.add(jsonObjectRequest);
 
-        SharedPreferences sharedPref = MainActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        final String username = sharedPref.getString("username", "");
+        SharedPrefs sharedPrefs = new SharedPrefs(this);
+        final String username = sharedPrefs.getUsernameFromSharedPref();
+        final String userid = sharedPrefs.getUserIdFromSharedPref();
+        //SharedPreferences sharedPref = MainActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        //final String username = sharedPref.getString("username", "");
         //final String userid = sharedPref.getString("userid", "");
 
-        final String userid = firebaseAuth.getCurrentUser().getUid();
-        String imageURI = sharedPref.getString("profilepicture", "");
+        //final String userid = firebaseAuth.getCurrentUser().getUid();
+        //String imageURI = sharedPref.getString("profilepicture", "");
 
         final String key = databaseReference.child("posts").push().getKey();
 
@@ -380,7 +374,8 @@ public class MainActivity extends AppCompatActivity {
         FirebaseStorage storage = FirebaseStorage.getInstance();
 
         StorageReference storageRef = storage.getReference();
-        final DatabaseReference queryForUserNumberOfPosts = databaseReference.child("Users");
+
+        //final DatabaseReference queryForUserNumberOfPosts = databaseReference.child("Users");
         // Uri file = Uri.fromFile(new File(mImageUri.toString()));
 
         //final Iterator iterator = hashMap.values().iterator();
@@ -428,17 +423,20 @@ public class MainActivity extends AppCompatActivity {
 
         if (medias.size() == 0) {
             //MONGODB INSERT
-            String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
+            String URL = Constants.protocol + Constants.IP + Constants.addNewPost+"/"+userid;
             Long timestamp = System.currentTimeMillis();
-            Map<String, String> PostData = new HashMap<>();
+            Map<String, Object> PostData = new HashMap<>();
             PostData.put("UserId", userid);
             PostData.put("Location", txtPrimary);
             PostData.put("PostText", editTextShareNews);
             PostData.put("timestamp", timestamp.toString());
             PostData.put("Town", txtSecondary);
+            PostData.put("LikesCount", 0);
+            PostData.put("CommentsCount", 0);
 
 
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
                     Log.d("volleyadd",response.toString());
@@ -544,6 +542,8 @@ public class MainActivity extends AppCompatActivity {
                                 PostData.put("timestamp", timestamp.toString());
                                 PostData.put("Town", txtSecondary);
                                 PostData.put("ContentPost",media);
+                                PostData.put("LikesCount", 0);
+                                PostData.put("CommentsCount", 0);
 
 
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
@@ -633,6 +633,8 @@ public class MainActivity extends AppCompatActivity {
                                 PostData.put("timestamp", timestamp.toString());
                                 PostData.put("Town", txtSecondary);
                                 PostData.put("ContentPost",media);
+                                PostData.put("LikesCount", 0);
+                                PostData.put("CommentsCount", 0);
 
 
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
@@ -799,6 +801,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ((NewsFeedFragment)fragmentList.get(0)).clearPostsList();
         Log.d("onDestroy", "onDestroy " + counter++);
     }
 

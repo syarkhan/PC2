@@ -10,11 +10,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.FirebasePushNotificationMethods;
 import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 import com.example.sheryarkhan.projectcity.adapters.CommentsListAdapter;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -25,12 +36,20 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import data.Comment;
+import data.Post;
 
 public class CommentsFragment extends Fragment {
     private ImageButton backButton;
@@ -48,7 +67,7 @@ public class CommentsFragment extends Fragment {
     private Query query;
 
     private String postId;
-
+    private SharedPrefs sharedPrefs;
 
 
     public CommentsFragment() {
@@ -63,9 +82,9 @@ public class CommentsFragment extends Fragment {
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
+        sharedPrefs = new SharedPrefs(getActivity());
 
         commentsList = new ArrayList<>();
-
 
 
         postId = getPostIdFromBundle();
@@ -91,7 +110,7 @@ public class CommentsFragment extends Fragment {
         commentsListAdapter = new CommentsListAdapter(commentsList);
         commentsRecyclerView.setAdapter(commentsListAdapter);
 
-        editTextComment = (EditText)view.findViewById(R.id.editTextComment);
+        editTextComment = (EditText) view.findViewById(R.id.editTextComment);
 
         backButton = (ImageButton) view.findViewById(R.id.backButton);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -106,57 +125,95 @@ public class CommentsFragment extends Fragment {
             }
         });
 
+        loadData();
+
         sendMessageBtn = (ImageButton) view.findViewById(R.id.sendMessageBtn);
         sendMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Send message to firebase
 
-                final String commentText = editTextComment.getText().toString();
-                final String userid = firebaseAuth.getCurrentUser().getUid();
-                String commentid = databaseReference.child("postcomments").child(postId).child("comments").push().getKey();
+                Toast.makeText(getActivity(),"Posting Comment",Toast.LENGTH_SHORT).show();
+                final String userid = sharedPrefs.getUserIdFromSharedPref();
+                final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+                        Constants.addNewPostComment;
 
-                final String toUserId = getUserIdOfPostFromBundle();
-                Long timestamp = HelperFunctions.getCurrentTimestamp();
-                Comment comment = new Comment(commentText,null,0,timestamp,userid);
-                Map<String, Object> childUpdates = new HashMap<>();
-                childUpdates.put("/postcomments/" +postId+ "/comments/" + commentid, comment);
-                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+                final String commentText = editTextComment.getText().toString();
+                Long timestamp = System.currentTimeMillis();
+                //Comment comment = new Comment(postId, commentText, timestamp.toString(), userid, 0,null);
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                Gson gson = gsonBuilder.create();
+                //String jsonObject = gson.toJson(comment);
+
+                Map<String, Object> PostCommentData = new HashMap<>();
+                PostCommentData.put("UserId", userid);
+                PostCommentData.put("PostId", postId);
+                PostCommentData.put("CommentText", commentText);
+                PostCommentData.put("timestamp", timestamp.toString());
+                PostCommentData.put("LikesCount", 0);
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, new JSONObject(PostCommentData), new Response.Listener<JSONObject>() {
                     @Override
-                    public void onSuccess(Void aVoid) {
-                            HelperFunctions.getToastShort(getActivity(),"comment posted");
-                        FirebasePushNotificationMethods.sendPostCommentNotification(toUserId, userid, postId, commentText,getContext());
+                    public void onResponse(JSONObject response) {
+                        Log.d("volleyadd",response.toString());
+                        Toast.makeText(getActivity(),"Posting Done",Toast.LENGTH_SHORT).show();
+                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("VolleyError", error.toString());
                     }
                 });
+
+
+                RequestQueue queue = Volley.newRequestQueue(getActivity());
+                queue.add(jsonObjectRequest);
+
+
+                //final String userid = firebaseAuth.getCurrentUser().getUid();
+//                String commentid = databaseReference.child("postcomments").child(postId).child("comments").push().getKey();
+//
+//                final String toUserId = getUserIdOfPostFromBundle();
+//                //Long timestamp = HelperFunctions.getCurrentTimestamp();
+//                //Comment comment = new Comment(commentText, null, 0, timestamp, userid);
+//                Map<String, Object> childUpdates = new HashMap<>();
+//                childUpdates.put("/postcomments/" + postId + "/comments/" + commentid, comment);
+//                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+//                    @Override
+//                    public void onSuccess(Void aVoid) {
+//                        HelperFunctions.getToastShort(getActivity(), "comment posted");
+//                        FirebasePushNotificationMethods.sendPostCommentNotification(toUserId, userid, postId, commentText, getContext());
+//                    }
+//                });
             }
         });
 
         //final Comment comment = new Comment();
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot item : dataSnapshot.getChildren())
-                {
-                    final Comment comment = item.getValue(Comment.class);
-                    comment.setCommentid(item.getKey());
-                    Log.d("commentdata",comment.toString());
-                    commentsList.add(comment);
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                for (DataSnapshot item : dataSnapshot.getChildren()) {
+//                    final Comment comment = item.getValue(Comment.class);
 //                    comment.setCommentid(item.getKey());
-//                    comment.setCommenttext(item.child("commenttext").toString());
-//                    //comment.setLikes(item.child("likes"));
-//                    comment.setLikesCount(2);
-//                    comment.setTimestamp(Long.valueOf(item.child("timestamp")));
-
-                    //final Comment comment = item.getValue(Comment.class);
-                }
-                commentsListAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+//                    Log.d("commentdata", comment.toString());
+//                    commentsList.add(comment);
+////                    comment.setCommentid(item.getKey());
+////                    comment.setCommenttext(item.child("commenttext").toString());
+////                    //comment.setLikes(item.child("likes"));
+////                    comment.setLikesCount(2);
+////                    comment.setTimestamp(Long.valueOf(item.child("timestamp")));
+//
+//                    //final Comment comment = item.getValue(Comment.class);
+//                }
+//                commentsListAdapter.notifyDataSetChanged();
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
 
         return view;
     }
@@ -169,6 +226,74 @@ public class CommentsFragment extends Fragment {
             return null;
         }
 
+    }
+
+    private void loadData() {
+
+
+String URL = Constants.protocol + Constants.IP + Constants.getPostComments+"/"+ postId;
+        StringRequest stringRequest = new StringRequest(URL, new Response.Listener<String>() {
+
+            @Override
+            public void onResponse(String response) {
+
+                //recyclerViewProgressBar.setVisibility(View.GONE);
+                if(response.equals("false")){
+                    //HelperFunctions.getToastShort(getActivity(),"No more data!");
+                    Toast.makeText(getActivity(),"No more data!",Toast.LENGTH_SHORT).show();
+                }
+                else {
+
+                    GsonBuilder gsonBuilder = new GsonBuilder();
+                    Gson gson = gsonBuilder.create();
+                    //JSONArray jsonArray = gson.fromJson(response,JSONArray.class);
+                    //int lastListSize = postList.size();
+
+                    List<Comment> list = gson.fromJson(response, new TypeToken<List<Comment>>() {}.getType());
+                    //postList.addAll(list);
+                    //Log.d("volleyposts", postList.toString());
+
+                    for (int i = 0; i < list.size(); i++) {
+                        Comment item = list.get(i);
+//                        try {
+//                            //JSONObject post = (JSONObject) jsonArray.get(i);
+//                            item = gson.fromJson(jsonArray.getJSONObject(i), Post.class);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+                        commentsList.add(item);
+                        commentsListAdapter.notifyItemInserted(commentsList.size());
+                        Log.d("volleyposts", commentsList.toString());
+                    }
+                }
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("VolleyError",error.toString());
+            }
+        });
+
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        queue.add(stringRequest);
+        stringRequest.setRetryPolicy(new RetryPolicy() {
+            @Override
+            public int getCurrentTimeout() {
+                return 50000;
+            }
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 50000;
+            }
+
+            @Override
+            public void retry(VolleyError error) throws VolleyError {
+                //recyclerViewProgressBar.setVisibility(View.GONE);
+            }
+        });
     }
 
     private String getTotalLikesFromBundle() {

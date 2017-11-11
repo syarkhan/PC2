@@ -1,8 +1,6 @@
 package com.example.sheryarkhan.projectcity.activities;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -18,17 +16,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.EndlessRecyclerOnScrollListener;
-import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.adapters.NewsFeedRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,7 +36,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,19 +44,14 @@ import com.google.gson.reflect.TypeToken;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.URLEncoder;
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import data.Posts;
+import data.Post;
 import data.PostsPOJO;
 
 
@@ -86,6 +78,7 @@ public class NewsFeedFragment extends Fragment {
     private String URL;
     private int page_num;
     private String town;
+    private SharedPrefs sharedPrefs;
 
     private LinearLayoutManager linearLayoutManager;
 
@@ -101,7 +94,7 @@ public class NewsFeedFragment extends Fragment {
     View view;
 
 
-    private List<Posts> postsList;
+    private List<Post> postList;
     public NewsFeedFragment() {
         // Required empty public constructor
     }
@@ -110,8 +103,8 @@ public class NewsFeedFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         page_num=0;
-        SharedPreferences sharedPref = getActivity().getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        town = sharedPref.getString("town","");
+        sharedPrefs = new SharedPrefs(getActivity());
+        town = sharedPrefs.getTownFromSharedPref();
         URL = changePageNumberURL(page_num);
         String iid = FirebaseInstanceId.getInstance().getToken();
 
@@ -138,7 +131,7 @@ public class NewsFeedFragment extends Fragment {
         view = inflater.inflate(R.layout.fragment_news_feed, container, false);
 
         list = new ArrayList<>();
-        postsList = new ArrayList<>();
+        postList = new ArrayList<>();
 
         newsFeedRecyclerView = (RecyclerView) view.findViewById(R.id.news_feed_recyclerview);
 
@@ -148,8 +141,16 @@ public class NewsFeedFragment extends Fragment {
         newsFeedRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         linearLayoutManager = new LinearLayoutManager(getActivity());
         newsFeedRecyclerView.setLayoutManager(linearLayoutManager);
-        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postsList);
+        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList,getActivity());
         newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
+
+//        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+//        itemAnimator.setAddDuration(1000);
+//        itemAnimator.setRemoveDuration(1000);
+//        newsFeedRecyclerView.setItemAnimator(itemAnimator);
+
+//        newsFeedRecyclerView.addItemDecoration(
+//                new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 //        newsFeedRecyclerAdapter.notifyItemChanged(0);
 
 
@@ -166,10 +167,10 @@ public class NewsFeedFragment extends Fragment {
 //        Query user = databaseReference.orderByChild("")
 //        for(int i=0;i<locations.length;i++)
 //        {
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("UserID").setValue(3);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("UserID").setValue(3);
 //        }
 
 
@@ -194,12 +195,12 @@ public class NewsFeedFragment extends Fragment {
 
 
 
-        loadData();
+        //loadData();
 
 
 //        mVolleyService = new VolleyService(mResultCallback, getActivity());
 //        mVolleyService.getDataVolley(Request.Method.GET,
-//                Constants.protocol + Constants.IP + "/Posts");
+//                Constants.protocol + Constants.IP + "/Post");
 
 //        query = databaseReference.child("posts").orderByChild("secondarylocation").equalTo("Saddar Town");
 //        query.limitToFirst(TOTAL_ITEM_EACH_LOAD).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -329,24 +330,24 @@ public class NewsFeedFragment extends Fragment {
 
     private String changePageNumberURL(int page_num){
         String townParam;
-        URI uri = null;
-        try {
-            uri = new URI(Constants.protocol ,null, Constants.IP, "/TownPosts/5&"+page_num+"&"+ town.replace("_"," "));
-            String request = uri.toASCIIString();
-            Log.d("urlencode",request);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+//        URI uri = null;
+//        try {
+//            uri = new URI(Constants.protocol ,null, Constants.IP, "/TownPosts/5&"+page_num+"&"+ town.replace("_"," "));
+//            String request = uri.toASCIIString();
+//            Log.d("urlencode",request);
+//        } catch (URISyntaxException e) {
+//            e.printStackTrace();
+//        }
 
         try {
-            townParam = URLEncoder.encode(town.replace("_"," "),"UTF-8").replaceAll("\\+", "%20");
+            townParam = URLEncoder.encode(town,"UTF-8").replaceAll("\\+", "%20");
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError("UTF-8 is unknown");
             // or 'throw new AssertionError("Impossible things are happening today. " +
             //                              "Consider buying a lottery ticket!!");'
         }
 
-        return Constants.protocol + Constants.IP + "/TownPosts/5&"+page_num+"&"+ townParam;
+        return Constants.protocol + Constants.IP + "/TownPosts/10&"+page_num+"&"+ townParam;
     }
 
     private void setUpVolley() {
@@ -371,35 +372,61 @@ public class NewsFeedFragment extends Fragment {
     }
 
     private void loadMoreData() {
-        currentPage++;
-        page_num++;
+
+
         URL = changePageNumberURL(page_num);
+        page_num++;
+        //currentPage++;
+
         loadData();
     }
 
     private void loadData() {
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL, new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(URL, new Response.Listener<String>() {
+
             @Override
             public void onResponse(String response) {
-
+                recyclerViewProgressBar.setVisibility(View.GONE);
                 if(response.equals("false")){
-                    HelperFunctions.getToastShort(getActivity(),"No more data!");
+                    //HelperFunctions.getToastShort(getActivity(),"No more data!");
+                    Toast.makeText(getActivity(),"No more data!",Toast.LENGTH_SHORT).show();
                 }
                 else {
+
                     GsonBuilder gsonBuilder = new GsonBuilder();
                     Gson gson = gsonBuilder.create();
+                    //JSONArray jsonArray = gson.fromJson(response,JSONArray.class);
+                    int lastListSize = postList.size();
 
-                    List<Posts> list = gson.fromJson(response, new TypeToken<List<Posts>>() {
-                    }.getType());
-                    postsList.addAll(list);
-                    Log.d("volleyposts", postsList.toString());
-//                newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postsList);
+                    List<Post> list = gson.fromJson(response, new TypeToken<List<Post>>() {}.getType());
+                    //postList.addAll(list);
+                    //Log.d("volleyposts", postList.toString());
+
+                    for (int i = 0; i < list.size(); i++) {
+                        Post item = list.get(i);
+//                        try {
+//                            //JSONObject post = (JSONObject) jsonArray.get(i);
+//                            item = gson.fromJson(jsonArray.getJSONObject(i), Post.class);
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+                        postList.add(item);
+                        newsFeedRecyclerAdapter.notifyItemInserted(postList.size());
+                        Log.d("volleyposts", postList.toString());
+                    }
+//                newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList);
 //                newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
                     //newsFeedRecyclerAdapter.notifyItemChanged(0);
-                    newsFeedRecyclerAdapter.notifyDataSetChanged();
+//                    if(lastListSize == 0) {
+                    //newsFeedRecyclerAdapter.notifyDataSetChanged();
+//                    }
+//                    else {
+//                        newsFeedRecyclerAdapter.notifyItemRangeInserted(0, 5);
+//
+//                    }
                 }
                 //newsFeedRecyclerAdapter.notifyItemInserted(1);
-                //newsFeedRecyclerAdapter.notifyItemRangeChanged(1,postsList.size());
+                //newsFeedRecyclerAdapter.notifyItemRangeChanged(1,postList.size());
                 //newsFeedRecyclerAdapter.notifyDataSetChanged();
 
             }
@@ -412,13 +439,34 @@ public class NewsFeedFragment extends Fragment {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         queue.add(stringRequest);
+        stringRequest.setRetryPolicy(new RetryPolicy() {
+            @Override
+            public int getCurrentTimeout() {
+                return 50000;
+            }
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 50000;
+            }
+
+            @Override
+            public void retry(VolleyError error) throws VolleyError {
+                recyclerViewProgressBar.setVisibility(View.GONE);
+            }
+        });
     }
 
+    public void clearPostsList()
+    {
+        postList.clear();
+    }
 
 
     @Override
     public void onPause() {
         super.onPause();
+
         if (getActivity().getSupportFragmentManager().findFragmentByTag("tab_town_news") != null) {
             getActivity().getSupportFragmentManager().findFragmentByTag("tab_town_news").setRetainInstance(true);
             Log.d("onPause123", "Instance found");

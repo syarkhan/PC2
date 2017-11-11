@@ -50,9 +50,9 @@ public class CommentsListAdapter extends RecyclerView.Adapter<CommentsListAdapte
 
         final Comment currentData = commentsList.get(mholder.getAdapterPosition());
         mholder.txtName.setText("Faizan Khan");
-        mholder.txtTimestamp.setText(HelperFunctions.getTimeAgo(currentData.getTimestamp()));
+        mholder.txtTimestamp.setText(HelperFunctions.getTimeAgo(Long.valueOf(currentData.getTimestamp())));
         //mholder.txtLikes.setText("126 Likes");
-        mholder.txtComment.setText(currentData.getCommenttext());
+        mholder.txtComment.setText(currentData.getCommentText());
 
 
     }

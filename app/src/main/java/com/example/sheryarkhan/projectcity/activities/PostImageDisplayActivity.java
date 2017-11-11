@@ -51,7 +51,7 @@ public class PostImageDisplayActivity extends AppCompatActivity {
             }
         });
         hideToolbarAfterSomeSec(2000);
-        supportPostponeEnterTransition();
+        //supportPostponeEnterTransition();
         storageReference = FirebaseStorage.getInstance().getReference();
 
         //  postImageViewDisplay = new TouchImageView(this);
@@ -75,26 +75,32 @@ public class PostImageDisplayActivity extends AppCompatActivity {
         String url = i.getStringExtra("url");
 
         StorageReference filePath = storageReference.child("images").child(url);
-        filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-
-                GlideApp.with(PostImageDisplayActivity.this)
-                        .load(uri)
-                        .dontAnimate()
-                        .listener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                supportStartPostponedEnterTransition();
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                supportStartPostponedEnterTransition();
-                                return false;
-                            }
-                        }).into(postImageViewDisplay);
+        GlideApp.with(PostImageDisplayActivity.this)
+                .load(filePath)
+                .placeholder(R.color.black)
+                .error(R.color.link)
+                .transition(DrawableTransitionOptions.withCrossFade(1000))
+                .into(postImageViewDisplay);
+//        filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//            @Override
+//            public void onSuccess(Uri uri) {
+//
+//                GlideApp.with(PostImageDisplayActivity.this)
+//                        .load(uri)
+//                        .dontAnimate()
+//                        .listener(new RequestListener<Drawable>() {
+//                            @Override
+//                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+//                                supportStartPostponedEnterTransition();
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+//                                supportStartPostponedEnterTransition();
+//                                return false;
+//                            }
+//                        }).into(postImageViewDisplay);
 
                 /*try {
                     GlideApp.with(PostImageDisplayActivity.this)
@@ -118,13 +124,13 @@ public class PostImageDisplayActivity extends AppCompatActivity {
                     Log.d("error", ex.toString());
                 }
 */
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d("PostImageError",e.toString());
-            }
-        });
+//            }
+//        }).addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception e) {
+//                Log.d("PostImageError",e.toString());
+//            }
+//        });
 
 
         //postImageViewDisplay.setImageDrawable(NewsFeedRecyclerAdapter.newsFeedItemPOJOs.get(imgIndex).getImage());

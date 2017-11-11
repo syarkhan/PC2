@@ -22,6 +22,7 @@ import com.example.sheryarkhan.projectcity.activities.LoginActivity;
 import com.example.sheryarkhan.projectcity.activities.MainActivity;
 import com.example.sheryarkhan.projectcity.activities.NotificationPostActivity;
 import com.example.sheryarkhan.projectcity.activities.ProfileActivity;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -41,25 +42,27 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
 
     private List<Setting> settingsList = Collections.emptyList();
     private FirebaseAuth firebaseAuth;
-    final SharedPreferences sharedPref;
+    private SharedPrefs sharedPrefs;
     private static final int TYPE_SETTING_PROFILE = 1;
     private static final int TYPE_SETTING_OTHERS = 2;
 
 
     public SettingsRecyclerAdapter(List<Setting> settingsList, Context context) {
         this.settingsList = settingsList;
-         sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        sharedPrefs = new SharedPrefs(context);
         firebaseAuth = FirebaseAuth.getInstance();
     }
+
     @Override
     public int getItemViewType(int position) {
-        if(position == 0){
+        if (position == 0) {
             return TYPE_SETTING_PROFILE;
-        }else {
+        } else {
             return TYPE_SETTING_OTHERS;
         }
 
     }
+
     @Override
     public MainViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context context = parent.getContext();
@@ -77,27 +80,26 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
     }
 
 
-
     @Override
     public void onBindViewHolder(MainViewHolder holder, int position) {
         Context context = holder.itemView.getContext();
-       // SettingsRecyclerAdapter.MainViewHolder mholder = holder;
-        if(holder.getItemViewType() == TYPE_SETTING_PROFILE){
+        // SettingsRecyclerAdapter.MainViewHolder mholder = holder;
+        if (holder.getItemViewType() == TYPE_SETTING_PROFILE) {
             ProfileHolder mholder = (ProfileHolder) holder;
-            setUpSettingProfileView(context,mholder,position);
-        }else if (holder.getItemViewType() == TYPE_SETTING_OTHERS){
+            setUpSettingProfileView(context, mholder, position);
+        } else if (holder.getItemViewType() == TYPE_SETTING_OTHERS) {
             SettingsHolder mholder = (SettingsHolder) holder;
-            SetUpSettingsView(context,mholder,position);
+            SetUpSettingsView(context, mholder, position);
         }
 
     }
 
-    private void setUpSettingProfileView(final Context context, final ProfileHolder mholder, int position){
+    private void setUpSettingProfileView(final Context context, final ProfileHolder mholder, int position) {
         final Setting currentData = settingsList.get(mholder.getAdapterPosition());
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        StorageReference  storageReference = FirebaseStorage.getInstance().getReference();
-        StorageReference filePath = storageReference.child("profilepictures").child("profilepic:"+userId);
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+        StorageReference filePath = storageReference.child("profilepictures").child("profilepic:" + userId);
         filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -121,7 +123,7 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
         mholder.constraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(context , ProfileActivity.class);
+                Intent intent = new Intent(context, ProfileActivity.class);
                 context.startActivity(intent);
             }
         });
@@ -142,34 +144,28 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
 
 
                 }*/
-                if(mholder.getAdapterPosition() == 1){
+                if (mholder.getAdapterPosition() == 1) {
                     //Notification
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.loadSettingNotificationFragment();
                     mainActivity.hideLayout();
-                }
-                else if(mholder.getAdapterPosition() == 2 ){
+                } else if (mholder.getAdapterPosition() == 2) {
                     //Change Password
-                }
-                else if(mholder.getAdapterPosition()== 3){
+                } else if (mholder.getAdapterPosition() == 3) {
                     //Logout
-                    /*final String town = sharedPref.getString("town", "");
-                    FirebaseMessaging.getInstance().unsubscribeFromTopic(town);
+                    final String town = sharedPrefs.getTownFromSharedPref();
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(town.replace(" ","_"));
                     FirebaseMessaging.getInstance().unsubscribeFromTopic("user_"+firebaseAuth.getCurrentUser().getUid());
 
 
                     //databaseReference.child(user.getUid()).child("status").setValue(false);
                     firebaseAuth.signOut();
-
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.clear();
-                    editor.apply();
+                    sharedPrefs.deleteSharedPrefsFile();
                     context.startActivity(new Intent(context, LoginActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                    ((Activity)context).finish();*/
+                    ((Activity)context).finish();
 
-                }
-                else {
+                } else {
                     //other settings
                 }
             }
@@ -182,13 +178,13 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
         return settingsList.size();
     }
 
-    public class MainViewHolder extends RecyclerView.ViewHolder{
-        public MainViewHolder(View v){
+    public class MainViewHolder extends RecyclerView.ViewHolder {
+        public MainViewHolder(View v) {
             super(v);
         }
     }
 
-   private class SettingsHolder extends MainViewHolder{
+    private class SettingsHolder extends MainViewHolder {
 
         ImageView imgViewSettings;
         TextView txtSettings;
@@ -197,19 +193,21 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
 
         public SettingsHolder(View itemView) {
             super(itemView);
-            imgViewSettings = (ImageView)itemView.findViewById(R.id.imgViewSettings);
+            imgViewSettings = (ImageView) itemView.findViewById(R.id.imgViewSettings);
             txtSettings = (TextView) itemView.findViewById(R.id.txtSettings);
             constraintLayout = (ConstraintLayout) itemView.findViewById(R.id.parentLayout);
             //txtViewProfile = (TextView) itemView.findViewById(R.id.txtViewProfile);
 
         }
     }
-    private class ProfileHolder extends MainViewHolder{
+
+    private class ProfileHolder extends MainViewHolder {
 
         ImageView imageViewProfile;
         TextView txtUsername;
         TextView txtEditProfile;
         ConstraintLayout constraintLayout;
+
         public ProfileHolder(View v) {
             super(v);
             imageViewProfile = (ImageView) v.findViewById(R.id.imgSettingProfile);

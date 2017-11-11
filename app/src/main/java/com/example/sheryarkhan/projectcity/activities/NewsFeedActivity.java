@@ -3,7 +3,7 @@
 //import android.app.Activity;
 //import android.content.Context;
 //import android.content.Intent;
-//import android.content.SharedPreferences;
+//import android.content.SharedPrefs;
 //import android.graphics.Bitmap;
 //import android.os.Vibrator;
 //import android.support.annotation.NonNull;
@@ -149,10 +149,10 @@
 ////        Query user = databaseReference.orderByChild("")
 ////        for(int i=0;i<locations.length;i++)
 ////        {
-////            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
-////            databaseReference.child("Posts").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
-////            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
-////            databaseReference.child("Posts").child(String.valueOf(i+3)).child("UserID").setValue(3);
+////            databaseReference.child("Post").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
+////            databaseReference.child("Post").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
+////            databaseReference.child("Post").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
+////            databaseReference.child("Post").child(String.valueOf(i+3)).child("UserID").setValue(3);
 ////        }
 //
 //        list = new ArrayList<>();
@@ -384,7 +384,7 @@
 //
 //    private void uploadPostDataToFirebase(final String txtPrimary, final String txtSecondary, final String editTextShareNews)
 //    {
-//        SharedPreferences sharedPref = NewsFeedActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+//        SharedPrefs sharedPref = NewsFeedActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
 //        final String username = sharedPref.getString("username", "");
 //        //final String userid = sharedPref.getString("userid", "");
 //

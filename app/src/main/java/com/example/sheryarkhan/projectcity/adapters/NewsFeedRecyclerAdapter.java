@@ -3,7 +3,6 @@ package com.example.sheryarkhan.projectcity.adapters;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.constraint.ConstraintLayout;
@@ -22,12 +21,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.FirebasePushNotificationMethods;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.activities.CommentsActivity;
 import com.example.sheryarkhan.projectcity.activities.MainActivity;
@@ -49,13 +53,11 @@ import com.google.firebase.storage.StorageReference;
 
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import data.Posts;
+import data.Post;
 import data.PostsPOJO;
 
 /**
@@ -75,25 +77,27 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
     private PostContentViewPagerAdapter postContentViewPagerAdapter;
     private StorageReference storageReference;
+    private SharedPrefs sharedPrefs;
     //private FirebaseAuth firebaseAuth;
     private final FirebaseUser firebaseUser;
 
     private static final int TYPE_SHARE_NEWS = 1;
     private static final int TYPE_NEWS_POST = 2;
 
-    private List<Posts> newsFeedItemPOJOs;
+    private List<Post> newsFeedItemPOJOs;
 
     private DatabaseReference databaseReference;
 
     private IVolleyResult mResultCallback;
     private VolleyService mVolleyService;
 
-    public NewsFeedRecyclerAdapter(List<Posts> newsFeedItems) {
-        //this.context = context;
+    public NewsFeedRecyclerAdapter(List<Post> newsFeedItems, Context context) {
+        this.context = context;
         this.newsFeedItemPOJOs = newsFeedItems;
         storageReference = FirebaseStorage.getInstance().getReference();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        sharedPrefs = new SharedPrefs(context);
         //firebaseUser = firebaseAuth.getCurrentUser();
 
         mResultCallback = new IVolleyResult() {
@@ -138,7 +142,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     @Override
     public MainViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        context = parent.getContext();
+        //context = parent.getContext();
 //        return new OnlyPostImageViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
 
         switch (viewType) {
@@ -165,25 +169,36 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     @Override
     public void onBindViewHolder(final MainViewHolder holder, final int position) {
 
-        context = holder.itemView.getContext();
+        //context = holder.itemView.getContext();
         //final Context context = holder.itemView.getContext();
         if (holder.getItemViewType() == TYPE_NEWS_POST) {
 
             OnlyPostImageViewHolder mholder = (OnlyPostImageViewHolder) holder;
             setUpPictureView(context, mholder, holder.getAdapterPosition() - 1);
         } else if (holder.getItemViewType() == TYPE_SHARE_NEWS) {
-
             final ShareNewsPostViewHolder mholder = (ShareNewsPostViewHolder) holder;
-
-            try {
-                GlideApp.with(context)
-                        .load(mholder.profilePicturePath)
-                        .circleCrop()
-                        .transition(DrawableTransitionOptions.withCrossFade(1000))
-                        .error(R.color.link)
-                        .into(mholder.imgProfilePic);
-            } catch (Exception ex) {
-                Log.d("error", ex.toString());
+            if (sharedPrefs.getProfilePictureFromSharedPref().equals("")) {
+                try {
+                    GlideApp.with(context)
+                            .load(R.drawable.circle_image)
+                            .circleCrop()
+                            .transition(DrawableTransitionOptions.withCrossFade(1000))
+                            .error(R.drawable.circle_image)
+                            .into(mholder.imgProfilePic);
+                } catch (Exception ex) {
+                    Log.d("error", ex.toString());
+                }
+            } else {
+                try {
+                    GlideApp.with(context)
+                            .load(mholder.profilePicturePath)
+                            .circleCrop()
+                            .transition(DrawableTransitionOptions.withCrossFade(1000))
+                            .error(R.drawable.circle_image)
+                            .into(mholder.imgProfilePic);
+                } catch (Exception ex) {
+                    Log.d("error", ex.toString());
+                }
             }
             mholder.imgProfilePic.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -203,49 +218,6 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             });
 
         }
-//        else {
-//            OnlyPostVideoViewHolder mHolder = (OnlyPostVideoViewHolder) holder;
-//            PostsPOJO currentData = newsFeedItemPOJOs.get(position);
-//            mHolder.Id = currentData.getUserID();
-//
-//            mHolder.txtName.setText(currentData.getUsername());
-//
-//            // Converting timestamp into X ago format
-//            CharSequence timeAgo = DateUtils.getRelativeTimeSpanString(
-//                    Long.parseLong(String.valueOf(currentData.getTimestamp())),
-//                    System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
-//            mHolder.txtTimeStamp.setText(timeAgo);
-//
-//            mHolder.txtUrl.setText("vimeo.com");
-//
-//            mHolder.txtStatusMsg.setText(currentData.getPostText());
-//
-//            mHolder.imgProfilePic.setImageDrawable(context.getDrawable(R.drawable.loginbg));
-//
-//
-//            mHolder.imgPost.setImageDrawable(context.getDrawable(R.drawable.q1bg));
-//
-//            mHolder.txtUrl.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    Toast.makeText(context,"URL:"+position,Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//
-//
-//            mHolder.imgPost.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//
-//                    Intent intent = new Intent(context, PostImageDisplayActivity.class);
-//                    intent.putExtra("imageIndex", position);
-//                    context.startActivity(intent);
-//
-//                }
-//            });
-//
-//
-//        }
 //        //set height in proportion to screen size
 //        int proportionalHeight = UIUtil.containerHeight((MainActivity) mCntx);
 //        TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, proportionalHeight); // (width, height)
@@ -298,7 +270,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
     private void setUpPictureView(final Context context, final OnlyPostImageViewHolder mholder, final int position) {
 
-        final Posts currentData = newsFeedItemPOJOs.get(position);
+        final Post currentData = newsFeedItemPOJOs.get(position);
 
         if (currentData.getContentPost() == null) {
             mholder.viewPager.setVisibility(View.GONE);
@@ -316,17 +288,17 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             mholder.viewPager.setVisibility(View.VISIBLE);
         }
 
-        mholder.txtName.setText(currentData.getUsername());
+        mholder.txtName.setText(currentData.getUserInfo().getUsername());
 
-        if (currentData.getProfilePicture() != null) {
-            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getProfilePicture());
+        if (currentData.getUserInfo().getProfilePicture() != null) {
+            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getUserInfo().getProfilePicture());
             filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
                     try {
                         GlideApp.with(context)
                                 .load(uri)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
                                 .circleCrop()
                                 .transition(DrawableTransitionOptions.withCrossFade(1000))
                                 .error(R.color.link)
@@ -384,6 +356,28 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
                     mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
                     mholder.btnHelpful.setTag("like");
                 }
+
+//                final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+//                        Constants.addOrRemoveUserLikeToPost+"/"+sharedPrefs.getUserIdFromSharedPref()+"/"+currentData.getPostId();
+//
+//                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, null, new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        Log.d("volleyadd",response.toString());
+//
+//                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+//                    }
+//                }, new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.d("VolleyError", error.toString());
+//                    }
+//                });
+//
+//                RequestQueue queue = Volley.newRequestQueue(context);
+//                queue.add(jsonObjectRequest);
+
+
                 databaseReference.child("posts/" + currentData.getPostId()).runTransaction(new Transaction.Handler() {
                     @Override
                     public Transaction.Result doTransaction(MutableData mutableData) {
@@ -440,10 +434,10 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
                                 if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
                                     //mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
 
-                                    if(!firebaseUser.getUid().equals(postsPOJO.getuserid())) {
+                                    if (!firebaseUser.getUid().equals(postsPOJO.getuserid())) {
                                         //sendNotificationToUsers(postsPOJO.getPostid(), postsPOJO.getuserid());
                                         FirebasePushNotificationMethods.sendPostLikeNotification(currentData.getUserId(),
-                                                firebaseUser.getUid(), currentData.getPostText(),currentData.getPostId(),context);
+                                                firebaseUser.getUid(), currentData.getPostText(), currentData.getPostId(), context);
                                     }
                                     Toast.makeText(context, "liked", Toast.LENGTH_SHORT).show();
                                 } else {
@@ -514,8 +508,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             shareNewsLayout = (ConstraintLayout) itemView.findViewById(R.id.shareNewsLayout);
             imgProfilePic = (ImageView) itemView.findViewById(R.id.imgProfilePic);
             txtShareNews.setTypeface(ROBOTO_FONT_THIN);
-            SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-            profilePicturePath = sharedPref.getString("profilepicture", "");
+            profilePicturePath = sharedPrefs.getProfilePictureFromSharedPref();
         }
 
     }

@@ -47,6 +47,7 @@
 
             <TextView
                 android:id="@+id/btnUpdateProfile"
+                android:enabled="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -78,8 +79,22 @@
     </android.support.v7.widget.Toolbar>
 
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar2"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="8dp" />
+
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/constraintLayout7"
+        android:id="@+id/mainLayout"
+        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/feed_item_rounded_corner"

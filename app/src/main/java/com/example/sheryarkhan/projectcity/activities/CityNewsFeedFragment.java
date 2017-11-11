@@ -108,10 +108,10 @@ public class CityNewsFeedFragment extends Fragment {
 //        Query user = databaseReference.orderByChild("")
 //        for(int i=0;i<locations.length;i++)
 //        {
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
-//            databaseReference.child("Posts").child(String.valueOf(i+3)).child("UserID").setValue(3);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
+//            databaseReference.child("Post").child(String.valueOf(i+3)).child("UserID").setValue(3);
 //        }
 
         list = new ArrayList<>();

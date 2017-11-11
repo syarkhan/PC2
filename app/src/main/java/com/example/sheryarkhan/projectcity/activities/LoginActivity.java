@@ -6,11 +6,20 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseNetworkException;
@@ -20,6 +29,14 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import data.User;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -29,6 +46,8 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
 
     private ProgressDialog progressDialog;
+    private SharedPrefs sharedPrefs;
+
 
 
 
@@ -41,6 +60,8 @@ public class LoginActivity extends AppCompatActivity {
         password = (EditText) findViewById(R.id.txtPassword);
 
         firebaseAuth = FirebaseAuth.getInstance();
+        sharedPrefs = new SharedPrefs(this);
+
 
         if(firebaseAuth.getCurrentUser() != null){
             FirebaseMessaging.getInstance().subscribeToTopic("user_"+firebaseAuth.getCurrentUser().getUid());
@@ -79,10 +100,49 @@ public class LoginActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<AuthResult> task) {
 
                 if(task.isSuccessful()){
-                    progressDialog.dismiss();
-                    finish();
-                    Intent intent = new Intent(getApplicationContext(),MainActivity.class);
-                    startActivity(intent);
+                    //if(!sharedPrefs.checkIfSharedPrefsFileExists()) {
+                        String URL = Constants.protocol + Constants.IP + Constants.getUserDetails+"/"+firebaseAuth.getCurrentUser().getUid();
+                        Log.d("url",URL);
+                        //Get userid, username and town from Mongodb database
+                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                Boolean isSuccess=false;
+                                GsonBuilder gsonBuilder = new GsonBuilder();
+                                Gson gson = gsonBuilder.create();
+                                try {
+                                    isSuccess = response.getBoolean("success");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                                if(isSuccess){
+                                    try {
+                                        User user = gson.fromJson(String.valueOf(response.getJSONObject("User")), User.class);
+                                        sharedPrefs.setUserIdToSharedPref(user.getUserId());
+                                        sharedPrefs.setUsernameToSharedPref(user.getUsername());
+                                        sharedPrefs.setTownToSharedPref(user.getTown());
+                                        sharedPrefs.setProfilePictureFromSharedPref("");
+                                        Log.d("userdata", user.toString());
+                                        progressDialog.dismiss();
+                                        finish();
+                                        Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+                                        startActivity(intent);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.d("VolleyError", error.toString());
+                            }
+                        });
+                        RequestQueue queue = Volley.newRequestQueue(LoginActivity.this);
+                        queue.add(jsonObjectRequest);
+                    //}
+
                 }else {
                     progressDialog.dismiss();
                     try {

@@ -29,11 +29,19 @@ import android.widget.Toast;
 import android.Manifest;
 
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -50,7 +58,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.File;
@@ -59,6 +71,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import data.PostsPOJO;
+import data.User;
 import data.UserClass;
 
 public class ProfileActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
@@ -84,7 +97,7 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
 
 
     private FirebaseAuth firebaseAuth;
-    private GoogleApiClient mGoogleApiClient;
+    private SharedPrefs sharedPrefs;
 
 
     //private Uri uriFilePath;
@@ -96,21 +109,20 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        sharedPrefs = new SharedPrefs(this);
+        final String userid = sharedPrefs.getUserIdFromSharedPref();
+
         Toast.makeText(getApplicationContext(),"retreiving user data",Toast.LENGTH_SHORT).show();
-        final SharedPreferences sharedPref = this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        String username = sharedPref.getString("username", "");
-        final String town = sharedPref.getString("town", "");
-
-        //String userId = sharedPref.getString("userid", "");
-
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser user = firebaseAuth.getCurrentUser();
-        Log.d("useriddada",user.getUid());
+        //Log.d("useriddada",user.getUid());
         query = databaseReference.child("Users").child(user.getUid());
 
+        txtUsername = (TextView) findViewById(R.id.txtUsername);
+        txtLocation = (TextView) findViewById(R.id.txtLocation);
         txtPointsValue = (TextView) findViewById(R.id.txtPointsValue);
         txtAbout = (TextView) findViewById(R.id.txtAbout);
         txtProfileBio = (TextView) findViewById(R.id.txtProfileBio);
@@ -120,63 +132,131 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
         constraintLayoutScroll = (ConstraintLayout)findViewById(R.id.constraintLayoutScroll);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        String URL = Constants.protocol + Constants.IP + Constants.getUserDetails+"/"+firebaseAuth.getCurrentUser().getUid();
+        Log.d("url",URL);
+        //Get userid, username and town from Mongodb database
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                final UserClass userClass = dataSnapshot.getValue(UserClass.class);
-                Log.d("userdada", userClass.toString());
-
-//
-//                    userClass = item.getValue(UserClass.class);
-                //Log.d("userdada",item.toString());
-                //Set username from shared prefs
-                txtUsername = (TextView) findViewById(R.id.txtUsername);
-                if (!dataSnapshot.child("number_of_posts").exists()) {
-                    txtTotalPosts.setText(String.valueOf(0));
-                } else {
-                    txtTotalPosts.setText(dataSnapshot.child("number_of_posts").getValue().toString());
+            public void onResponse(JSONObject response) {
+                Boolean isSuccess=false;
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                Gson gson = gsonBuilder.create();
+                try {
+                    isSuccess = response.getBoolean("success");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
 
-                if (!dataSnapshot.child("totalpoints").exists()) {
-                    txtPointsValue.setText(String.valueOf(0));
-                } else {
-                    txtPointsValue.setText(dataSnapshot.child("totalpoints").getValue().toString());
+                if(isSuccess){
+                    try {
+                        User user = gson.fromJson(String.valueOf(response.getJSONObject("User")), User.class);
+                        Log.d("userdata", user.toString());
+                        if (user.getTotalNumberOfPosts() == null) {
+                            txtTotalPosts.setText(String.valueOf(0));
+                        } else {
+                            txtTotalPosts.setText(user.getTotalNumberOfPosts());
+                        }
+
+                        if (user.getPoints() == null) {
+                            txtPointsValue.setText(String.valueOf(0));
+                        } else {
+                            txtPointsValue.setText(user.getPoints());
+                        }
+
+                        txtUsername.setText(user.getUsername());
+
+                        txtAbout.setText("About " + user.getUsername());
+
+                        if(user.getBio() == null)
+                        {
+                            txtProfileBio.setText("Write something about yourself");
+                        }
+                        txtProfileBio.setText(user.getBio());
+
+                        if (user.getTown() == null)
+                        {
+                            txtLocation.setText("No Town Selected");
+                        }
+                        else {
+                            txtLocation.setText(user.getTown() +", Karachi");
+                        }
+
+                        progressBar.setVisibility(View.GONE);
+                        constraintLayoutScroll.setVisibility(View.VISIBLE);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(ProfileActivity.this,"Connection Error!",Toast.LENGTH_SHORT).show();
                 }
-
-                txtUsername.setText(dataSnapshot.child("username").getValue().toString());
-
-                txtAbout.setText("About " + userClass.getUsername());
-
-                txtProfileBio.setText(userClass.getBio());
-
-                //Set town from shared prefs
-                txtLocation = (TextView) findViewById(R.id.txtLocation);
-
-                if (userClass.getPrimarylocation() == null)
-                {
-                    txtLocation.setText("No Town Selected");
-                }
-                else {
-                    txtLocation.setText(dataSnapshot.child("primarylocation").getValue().toString() + ", Karachi");
-                }
-
-
-
-
-                //DataSnapshot dataSnapshot1 = dataSnapshot.getC;
-
-
-                //Toast.makeText(getApplicationContext(),"done",Toast.LENGTH_SHORT).show();
-                progressBar.setVisibility(View.GONE);
-                constraintLayoutScroll.setVisibility(View.VISIBLE);
             }
-
+        }, new Response.ErrorListener() {
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onErrorResponse(VolleyError error) {
+                Log.d("VolleyError", error.toString());
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(ProfileActivity.this,"Connection Error!",Toast.LENGTH_SHORT).show();
             }
         });
+        RequestQueue queue = Volley.newRequestQueue(ProfileActivity.this);
+        queue.add(jsonObjectRequest);
+
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                final UserClass userClass = dataSnapshot.getValue(UserClass.class);
+//                Log.d("userdada", userClass.toString());
+//
+//
+//                if (!dataSnapshot.child("number_of_posts").exists()) {
+//                    txtTotalPosts.setText(String.valueOf(0));
+//                } else {
+//                    txtTotalPosts.setText(dataSnapshot.child("number_of_posts").getValue().toString());
+//                }
+//
+//                if (!dataSnapshot.child("totalpoints").exists()) {
+//                    txtPointsValue.setText(String.valueOf(0));
+//                } else {
+//                    txtPointsValue.setText(dataSnapshot.child("totalpoints").getValue().toString());
+//                }
+//
+//                txtUsername.setText(dataSnapshot.child("username").getValue().toString());
+//
+//                txtAbout.setText("About " + userClass.getUsername());
+//
+//                txtProfileBio.setText(userClass.getBio());
+//
+//                //Set town from shared prefs
+//
+//
+//                if (userClass.getPrimarylocation() == null)
+//                {
+//                    txtLocation.setText("No Town Selected");
+//                }
+//                else {
+//                    txtLocation.setText(dataSnapshot.child("primarylocation").getValue().toString() + ", Karachi");
+//                }
+//
+//
+//
+//
+//                //DataSnapshot dataSnapshot1 = dataSnapshot.getC;
+//
+//
+//                //Toast.makeText(getApplicationContext(),"done",Toast.LENGTH_SHORT).show();
+//                progressBar.setVisibility(View.GONE);
+//                constraintLayoutScroll.setVisibility(View.VISIBLE);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -202,7 +282,7 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
 //                //databaseReference.child(user.getUid()).child("status").setValue(false);
 //                firebaseAuth.signOut();
 //
-//                SharedPreferences.Editor editor = sharedPref.edit();
+//                SharedPrefs.Editor editor = sharedPref.edit();
 //                editor.clear();
 //                editor.apply();
 //                startActivity(new Intent(ProfileActivity.this, LoginActivity.class)
@@ -239,7 +319,7 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
         userImage = (ImageView) findViewById(R.id.imgUser);
 
         try {
-            String imageURI = sharedPref.getString("profilepicture", "");
+            String imageURI = sharedPrefs.getProfilePictureFromSharedPref();
             mImageUri = Uri.parse(imageURI);
             GlideApp.with(this)
                     .load(mImageUri)
@@ -252,74 +332,12 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
 
         }
 
-//        if (savedInstanceState != null) {
-//            if (mImageUri == null && savedInstanceState.getString("imageuri") != null) {
-//                mImageUri = Uri.parse(savedInstanceState.getString("imageuri"));
-//                Glide.with(this)
-//                        .load(mImageUri)
-//                        .apply(RequestOptions.circleCropTransform())
-//
-//                        .into(userImage);
-//
-//            }
-//        }
-
-
-//
-//
-//        if(savedInstanceState != null && mImageUri != null ){
-//
-//
-//        }
-
-
-//        btnUploadImage = (ImageView) findViewById(R.id.btnUploadImage);
-//        btnUploadImage.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                selectImage();
-//                BtnSaveOnClick();
-//            }
-//        });
-        //txtChangedUsername = (EditText) findViewById(R.id.txtChangeName);
-//        txtChangedEmail = (EditText) findViewById(R.id.txtChangeEmail);
-//        txtChangedPassword = (EditText) findViewById(R.id.txtChangePassword);
-//        txtChangedConfirmPassword = (EditText) findViewById(R.id.txtConfirmChangedPassword);
-//        txtDescription = (EditText) findViewById(R.id.txtUserDescription);
-//        txtChangedMobileNo = (EditText) findViewById(R.id.txtChangeMobileNo);
-
-
-        // Bundle bundle = getIntent().getExtras();
-//
-//
-        // String username = bundle.getString("username");
-//        String email = bundle.getString("email");
-//        String mobileNo = bundle.getString("mobileNo");
-//        String password = bundle.getString("password");
-//
-
-        //txtChangedUsername.setText(username);
-//        txtChangedEmail.setText(email);
-//        txtChangedPassword.setText(password);
-//        txtChangedConfirmPassword.setText(password);
-//        txtChangedMobileNo.setText(mobileNo);
-//
-//
-
-
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
-
-//    public void uploadImageBuilder(View view){
-//
-//                selectImage();
-//
-//    }
-
 
     public void BtnSaveOnClick() {
 //        databaseReference = FirebaseDatabase.getInstance().getReference();
@@ -364,26 +382,6 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
 
 
     }
-
-//    public void checkCameraPermission(){
-//
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA  ) != PackageManager.PERMISSION_GRANTED) {
-//
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
-//
-//        }
-//        else {
-//            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-//                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-//            }
-//
-//        }
-//
-//
-//
-//    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -505,6 +503,70 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
     }
 
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        SharedPreferences sharedPref = this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        if (requestCode == REQUEST_OPEN_RESULT_CODE && resultCode == Activity.RESULT_OK) {
+            if (resultData != null) {
+                mImageUri = resultData.getData();
+
+                /*String[] columns = {MediaStore.Images.Media.ORIENTATION};
+                Cursor cursor = getApplicationContext().getContentResolver().query(mImageUri, columns, null, null, null);
+                if (cursor == null)
+                {
+
+                }
+                else {
+                    cursor.moveToFirst();
+                    int orientationColumnIndex = cursor.getColumnIndex(columns[0]);
+                    int rotation = cursor.getInt(orientationColumnIndex);
+                    cursor.close();
+                }*/
+
+
+                Glide.with(this)
+                        .load(mImageUri)
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(userImage);
+
+                editor.putString("profilepicture", mImageUri.toString());
+                editor.apply();
+
+            }
+        } else if (requestCode == 100) {
+            if (resultCode == RESULT_OK) {
+                Glide.with(this)
+                        .load(mImageUri)
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(userImage);
+                editor.putString("profilepicture", mImageUri.toString());
+                editor.apply();
+
+//                userImage.setImageURI(mImageUri);
+            }
+        }
+
+        //if (requestCode == REQUEST_IMAGE_CAPTURE  && resultCode == Activity.RESULT_OK) {
+//            if (resultData != null) {
+//
+//                try{
+//                mImageUri = resultData.getData();}
+//                catch (Exception e ){
+//                    Log.i("masla",e.toString());
+//                }
+//                Glide.with(this)
+//                        .load(mImageUri)
+//                        .apply(RequestOptions.circleCropTransform())
+//                        .into(userImage);
+//
+//
+//                // Here is path of your captured image, so you can create bitmap from it, etc.
+//
+//
+//            }
+    }
+
     public void selectImage() {
         final CharSequence[] options = {"Take Photo", "Choose from Gallery"};
         final AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
@@ -614,69 +676,6 @@ public class ProfileActivity extends AppCompatActivity implements GoogleApiClien
 //        super.onSaveInstanceState(outState);
 //    }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        SharedPreferences sharedPref = this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        if (requestCode == REQUEST_OPEN_RESULT_CODE && resultCode == Activity.RESULT_OK) {
-            if (resultData != null) {
-                mImageUri = resultData.getData();
-
-                /*String[] columns = {MediaStore.Images.Media.ORIENTATION};
-                Cursor cursor = getApplicationContext().getContentResolver().query(mImageUri, columns, null, null, null);
-                if (cursor == null)
-                {
-
-                }
-                else {
-                    cursor.moveToFirst();
-                    int orientationColumnIndex = cursor.getColumnIndex(columns[0]);
-                    int rotation = cursor.getInt(orientationColumnIndex);
-                    cursor.close();
-                }*/
-
-
-                Glide.with(this)
-                        .load(mImageUri)
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(userImage);
-
-                editor.putString("profilepicture", mImageUri.toString());
-                editor.apply();
-
-            }
-        } else if (requestCode == 100) {
-            if (resultCode == RESULT_OK) {
-                Glide.with(this)
-                        .load(mImageUri)
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(userImage);
-                editor.putString("profilepicture", mImageUri.toString());
-                editor.apply();
-
-//                userImage.setImageURI(mImageUri);
-            }
-        }
-
-        //if (requestCode == REQUEST_IMAGE_CAPTURE  && resultCode == Activity.RESULT_OK) {
-//            if (resultData != null) {
-//
-//                try{
-//                mImageUri = resultData.getData();}
-//                catch (Exception e ){
-//                    Log.i("masla",e.toString());
-//                }
-//                Glide.with(this)
-//                        .load(mImageUri)
-//                        .apply(RequestOptions.circleCropTransform())
-//                        .into(userImage);
-//
-//
-//                // Here is path of your captured image, so you can create bitmap from it, etc.
-//
-//
-//            }
-    }
 
 
 }

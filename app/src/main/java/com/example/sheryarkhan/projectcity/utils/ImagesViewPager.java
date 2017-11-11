@@ -9,12 +9,14 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -27,6 +29,7 @@ import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.PlayVideoActivity;
 import com.example.sheryarkhan.projectcity.activities.PostImageDisplayActivity;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -130,53 +133,68 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
         if(media.get(position).contains("image")){
             //imagesViewPager.setClickable(true);
 
-            StorageReference filePath = storageReference.child("images").child(media.get(position));
-            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-                    try {
-                        GlideApp.with(context)
-                                .load(uri)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                                .centerCrop()
-                                .error(R.color.link)
-                                .transition(DrawableTransitionOptions.withCrossFade(1000))
-                                .into(imagesViewPager);
-                    } catch (Exception ex) {
-                        Log.d("error", ex.toString());
-                    }
-                }
-            });
+            try {
+            final StorageReference filePath = storageReference.child("images").child(media.get(position));
+                GlideApp.with(context)
+                        .load(filePath)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .centerCrop()
+                        .error(R.color.link)
+                        .transition(DrawableTransitionOptions.withCrossFade(1000))
+                        .into(imagesViewPager);
+//            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                @Override
+//                public void onSuccess(Uri uri) {
+//
+//                        GlideApp.with(context)
+//                                .load(filePath)
+//                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+//                                .centerCrop()
+//                                .error(R.color.link)
+//                                .transition(DrawableTransitionOptions.withCrossFade(1000))
+//                                .into(imagesViewPager);
+//
+//                }
+//            }).addOnFailureListener(new OnFailureListener() {
+//                @Override
+//                public void onFailure(@NonNull Exception e) {
+//                    HelperFunctions.getToastShort(context,"no net");
+//                }
+//            });
+            } catch (Exception ex) {
+                Log.d("error", ex.toString());
+            }
         }
         else if(media.get(position).contains("video")){
             playImageView.setVisibility(VISIBLE);
 
             StorageReference filePath = storageReference.child("images").child(media.get(position));
-            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-                    //Bitmap bitmap = retrieveThumbnailFromVideo(String.valueOf(uri));
-                    //Drawable thumbnail = new BitmapDrawable(getResources(),bitmap);
-
-                    //imagesViewPager.setImageDrawable(thumbnail);
-                    RequestOptions myOptions = new RequestOptions()
-                            .centerCrop()
-                            .error(R.color.link);
-                    try {
-                        GlideApp.with(context)
-                                .asBitmap()
-                                .apply(myOptions)
-                                .load(uri)
-                                .into(imagesViewPager);
-                    } catch (Exception ex) {
-                        Log.d("error", ex.toString());
-                    }
-//                    if (bitmap != null && !bitmap.isRecycled()) {
-//                        bitmap.recycle();
-//                        bitmap = null;
-//                    }
-                }
-            });
+            RequestOptions myOptions = new RequestOptions()
+                    .centerCrop()
+                    .error(R.color.link);
+            try {
+                GlideApp.with(context)
+                        .asBitmap()
+                        .apply(myOptions)
+                        .load(filePath)
+                        .into(imagesViewPager);
+            } catch (Exception ex) {
+                Log.d("error", ex.toString());
+            }
+//            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                @Override
+//                public void onSuccess(Uri uri) {
+//                    //Bitmap bitmap = retrieveThumbnailFromVideo(String.valueOf(uri));
+//                    //Drawable thumbnail = new BitmapDrawable(getResources(),bitmap);
+//
+//                    //imagesViewPager.setImageDrawable(thumbnail);
+//
+////                    if (bitmap != null && !bitmap.isRecycled()) {
+////                        bitmap.recycle();
+////                        bitmap = null;
+////                    }
+//                }
+//            });
 
         }
 
@@ -203,11 +221,11 @@ public class ImagesViewPager extends android.support.v7.widget.AppCompatImageVie
                     String url = media.get(position);
                     Intent intent = new Intent(context, PostImageDisplayActivity.class);
                     intent.putExtra("url", url);
-                    ActivityOptionsCompat options = ActivityOptionsCompat.
-                            makeSceneTransitionAnimation((Activity) context,
-                                    imagesViewPager,
-                                    "image");
-                    context.startActivity(intent, options.toBundle());
+//                    ActivityOptionsCompat options = ActivityOptionsCompat.
+//                            makeSceneTransitionAnimation((Activity) context,
+//                                    imagesViewPager,
+//                                    "image");
+                    context.startActivity(intent);
                 }else if(media.get(position).contains("video")){
                     String urlVideo = media.get(position);
                     Intent intent = new Intent(getContext(), PlayVideoActivity.class);

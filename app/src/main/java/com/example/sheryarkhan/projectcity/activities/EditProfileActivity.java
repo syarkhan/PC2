@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -24,14 +25,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
+import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -46,11 +56,19 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
+import data.User;
 import data.UserClass;
 
 public class EditProfileActivity extends AppCompatActivity {
@@ -60,6 +78,8 @@ public class EditProfileActivity extends AppCompatActivity {
     TextView txtCancel;
     ImageView btnUploadImage, imgUser;
     EditText editTextName, editTextInfo;
+    private ConstraintLayout mainLayout;
+    private ProgressBar progressBar;
     private static final int REQUEST_OPEN_RESULT_CODE_FOR_TOWN = 10;
     private static final int REQUEST_OPEN_RESULT_CODE = 0;
     public static final int PERMISSIONS_MULTIPLE_REQUEST = 123;
@@ -70,28 +90,28 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
-    private SharedPreferences sharedPref;
-    private SharedPreferences.Editor editor;
+    private SharedPrefs sharedPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
 
-        sharedPref = this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        Town = sharedPref.getString("town", "");
-        editor = sharedPref.edit();
+        sharedPrefs = new SharedPrefs(this);
+        Town = sharedPrefs.getTownFromSharedPref();
+        final String userId = sharedPrefs.getUserIdFromSharedPref();
         //final String userId = sharedPref.getString("userid", "");
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        String userId = user.getUid();
+        //FirebaseUser user = firebaseAuth.getCurrentUser();
+        //final String userId = user.getUid();
         query = databaseReference.child("Users").child(userId);
 
+        mainLayout = (ConstraintLayout) findViewById(R.id.mainLayout);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         txtLocation = (TextView) findViewById(R.id.txtLocation);
         txtUpdateProfile = (TextView) findViewById(R.id.btnUpdateProfile);
-//        txtCancel = (TextView)
         imgUser = (ImageView) findViewById(R.id.imgUser);
 
         btnUploadImage = (ImageView) findViewById(R.id.btnUploadImage);
@@ -101,7 +121,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
 
         try {
-            String imageURI = sharedPref.getString("profilepicture", "");
+            String imageURI = sharedPrefs.getProfilePictureFromSharedPref();
             mImageUri = Uri.parse(imageURI);
             GlideApp.with(this)
                     .load(mImageUri)
@@ -114,35 +134,92 @@ public class EditProfileActivity extends AppCompatActivity {
 
         }
 
-
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        String URL = Constants.protocol + Constants.IP + Constants.getUserDetails+"/"+userId;
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                final UserClass userClass = dataSnapshot.getValue(UserClass.class);
-
-                //Log.d("userdadaedit",userClass.toString());
-                if (userClass.getPrimarylocation() == null)
-                {
-                    txtLocation.setText("Select Town");
-                    txtLocation.setTypeface(null, Typeface.BOLD);
-                }
-                else {
-                    txtLocation.setText(userClass.getPrimarylocation());
-                    txtLocation.setTextColor(ContextCompat.getColor(EditProfileActivity.this,R.color.colorAccent));
+            public void onResponse(JSONObject response) {
+                Boolean isSuccess=false;
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                Gson gson = gsonBuilder.create();
+                try {
+                    isSuccess = response.getBoolean("success");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
 
-                editTextName.setText(userClass.getUsername());
-                editTextInfo.setText(userClass.getBio());
+                if(isSuccess){
+                    try {
+                        txtUpdateProfile.setEnabled(true);
+                        User user = gson.fromJson(String.valueOf(response.getJSONObject("User")), User.class);
+                        Log.d("userdata", user.toString());
 
+                        editTextName.setText(user.getUsername());
 
+                        if(user.getBio() != null)
+                        {
+                            editTextInfo.setText(user.getBio());
+                        }
+
+                        if (user.getTown() == null)
+                        {
+                            txtLocation.setText("No Town Selected");
+                        }
+                        else {
+                            txtLocation.setText(user.getTown());
+                        }
+
+                        progressBar.setVisibility(View.GONE);
+                        mainLayout.setVisibility(View.VISIBLE);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(EditProfileActivity.this,"Connection Error!",Toast.LENGTH_SHORT).show();
+                }
             }
-
+        }, new Response.ErrorListener() {
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onErrorResponse(VolleyError error) {
+                Log.d("VolleyError", error.toString());
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(EditProfileActivity.this,"Connection Error!",Toast.LENGTH_SHORT).show();
             }
         });
+        RequestQueue queue = Volley.newRequestQueue(EditProfileActivity.this);
+        queue.add(jsonObjectRequest);
+
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                final UserClass userClass = dataSnapshot.getValue(UserClass.class);
+//
+//                //Log.d("userdadaedit",userClass.toString());
+//                if (userClass.getPrimarylocation() == null)
+//                {
+//                    txtLocation.setText("Select Town");
+//                    txtLocation.setTypeface(null, Typeface.BOLD);
+//                }
+//                else {
+//                    txtLocation.setText(userClass.getPrimarylocation());
+//                    txtLocation.setTextColor(ContextCompat.getColor(EditProfileActivity.this,R.color.colorAccent));
+//                }
+//
+//                editTextName.setText(userClass.getUsername());
+//                editTextInfo.setText(userClass.getBio());
+//
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+
         txtCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -159,69 +236,92 @@ public class EditProfileActivity extends AppCompatActivity {
             }
         });
 
+
+        final String updateUserURL = Constants.protocol + Constants.IP +
+                Constants.updateUserDetails+"/"+userId;
         txtUpdateProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (TextUtils.isEmpty(editTextName.getText().toString().trim()) || TextUtils.isEmpty(txtLocation.getText().toString().trim())) {
-                    Toast.makeText(getApplicationContext(), "Name and Town field cannot be empty", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Name field cannot be empty", Toast.LENGTH_LONG).show();
                 } else {
-                    //SharedPreferences sharedPref = EditProfileActivity.this.getSharedPreferences(Constants.MY_PREFS_NAME, Context.MODE_PRIVATE);
+                    Map<String, Object> UserDetails = new HashMap<>();
 
-                    final FirebaseUser user = firebaseAuth.getCurrentUser();
-                    databaseReference.child("Users/" + user.getUid()).child("primarylocation")
-                            .setValue(Town).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    if(mImageUri == null) {
+                        UserDetails.put("ProfilePicture", "user_"+userId);
+                    }
+
+                    UserDetails.put("Username", editTextName.getText().toString());
+                    UserDetails.put("Town", Town);
+                    UserDetails.put("Bio", editTextInfo.getText().toString());
+                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, updateUserURL, new JSONObject(UserDetails), new Response.Listener<JSONObject>() {
                         @Override
-                        public void onSuccess(Void aVoid) {
-
-                            if (Town.contains(" ")) {
-                                Town = Town.replace(" ","_");
-//                        String[] arr = Town.split(" ");
-//                        if (arr.length == 2) {
-//                            FirebaseMessaging.getInstance().subscribeToTopic(arr[0] + "_" + arr[1]);
-//                            editor.putString("town", arr[0] + "_" + arr[1]);
-//                            Log.d("towndada2", arr.toString());
-//                        } else if (arr.length == 3) {
-//                            FirebaseMessaging.getInstance().subscribeToTopic(arr[0] + "_" + arr[1] + "_" + arr[2]);
-//                            editor.putString("town", arr[0] + "_" + arr[1] + "_" + arr[2]);
-//                            Log.d("towndada3", arr.toString());
-//                        }
-                                FirebaseMessaging.getInstance().subscribeToTopic(Town);
-                                editor.putString("town",Town);
-                            } else {
-                                FirebaseMessaging.getInstance().subscribeToTopic(Town);
-                                editor.putString("town", Town);
-                                Log.d("towndada1", Town);
+                        public void onResponse(JSONObject response) {
+                            Boolean isSuccess=false;
+                            try {
+                                isSuccess = response.getBoolean("success");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            if(isSuccess){
+                                Toast.makeText(EditProfileActivity.this,"Details Updated!",Toast.LENGTH_SHORT).show();
+                                finish();
+                            }else{
+                                Toast.makeText(EditProfileActivity.this,"Details did not update, please try again",Toast.LENGTH_SHORT).show();
                             }
                         }
-                    });
-
-
-                    databaseReference.child("Users/" + user.getUid()).child("city")
-                            .setValue("Karachi");
-
-                    databaseReference.child("Users/" + user.getUid()).child("bio")
-                            .setValue(editTextInfo.getText().toString());
-
-                    databaseReference.child("Users/" + user.getUid()).child("username")
-                            .setValue(editTextName.getText().toString())
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    //editor.putString("userid",user.getUid());
-                                    editor.putString("username", editTextName.getText().toString());
-                                    //editor.putString("profilepicture","");
-                                    editor.apply();
-                                    startActivity(new Intent(EditProfileActivity.this, ProfileActivity.class));
-                                    finish();
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
+                    }, new Response.ErrorListener() {
                         @Override
-                        public void onFailure(@NonNull Exception e) {
-
+                        public void onErrorResponse(VolleyError error) {
+                            Log.d("VolleyError", error.toString());
+                            progressBar.setVisibility(View.GONE);
+                            Toast.makeText(EditProfileActivity.this,"Connection Error!",Toast.LENGTH_SHORT).show();
                         }
                     });
+                    RequestQueue queue = Volley.newRequestQueue(EditProfileActivity.this);
+                    queue.add(jsonObjectRequest);
+//                    final FirebaseUser user = firebaseAuth.getCurrentUser();
+//                    databaseReference.child("Users/" + user.getUid()).child("primarylocation")
+//                            .setValue(Town).addOnSuccessListener(new OnSuccessListener<Void>() {
+//                        @Override
+//                        public void onSuccess(Void aVoid) {
+//
+//                            if (Town.contains(" ")) {
+//                                FirebaseMessaging.getInstance().subscribeToTopic(Town.replace(" ","_"));
+//                                sharedPrefs.setTownToSharedPref(Town);
+//
+//                            } else {
+//                                FirebaseMessaging.getInstance().subscribeToTopic(Town);
+//                                sharedPrefs.setTownToSharedPref(Town);
+//                                Log.d("towndada1", Town);
+//                            }
+//                        }
+//                    });
+//
+//
+//                    databaseReference.child("Users/" + user.getUid()).child("city")
+//                            .setValue("Karachi");
+//
+//                    databaseReference.child("Users/" + user.getUid()).child("bio")
+//                            .setValue(editTextInfo.getText().toString());
+//
+//                    databaseReference.child("Users/" + user.getUid()).child("username")
+//                            .setValue(editTextName.getText().toString())
+//                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                @Override
+//                                public void onSuccess(Void aVoid) {
+//                                    //editor.putString("userid",user.getUid());
+//                                    sharedPrefs.setUsernameToSharedPref(editTextName.getText().toString());
+//                                    //startActivity(new Intent(EditProfileActivity.this, ProfileActivity.class));
+//                                    finish();
+//                                }
+//                            }).addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//
+//                        }
+//                    });
                 }
-
             }
         });
 
@@ -245,19 +345,6 @@ public class EditProfileActivity extends AppCompatActivity {
         FirebaseStorage storage = FirebaseStorage.getInstance();
 
         StorageReference storageRef = storage.getReference();
-
-//        Bitmap bmp = ImageCompression.getImageFromResult(EditProfileActivity.this, String.valueOf(mImageUri));//your compressed bitmap here
-//        //bmp = ImageCompression.rotate(bmp,Integer.parseInt(item.get(2)));
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-//        byte[] imageByteData = baos.toByteArray();
-//
-//        try {
-//            baos.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        bmp.recycle();
 
         StorageReference imagesRef = storageRef.child("profilepictures/profilepic:" + user.getUid());
         //StorageReference imagesRef = storageRef.child("images/"+);
@@ -421,7 +508,7 @@ public class EditProfileActivity extends AppCompatActivity {
             if (resultData != null && resultCode == RESULT_OK) {
                 Town = resultData.getStringExtra("Town");
 
-                editor.putString("town", Town);
+                sharedPrefs.setTownToSharedPref(Town);
 
                 txtLocation.setText(Town);
                 txtLocation.setTextColor(ContextCompat.getColor(this,R.color.colorAccent));
@@ -437,8 +524,7 @@ public class EditProfileActivity extends AppCompatActivity {
                         .circleCrop()
                         .into(imgUser);
 
-                editor.putString("profilepicture", mImageUri.toString());
-                editor.apply();
+                sharedPrefs.setProfilePictureFromSharedPref(mImageUri.toString());
                 saveProfilePictureToServerDB();
 
             }
@@ -449,8 +535,7 @@ public class EditProfileActivity extends AppCompatActivity {
                         .load(mImageUri)
                         .apply(RequestOptions.circleCropTransform())
                         .into(imgUser);
-                editor.putString("profilepicture", mImageUri.toString());
-                editor.apply();
+                sharedPrefs.setProfilePictureFromSharedPref(mImageUri.toString());
                 saveProfilePictureToServerDB();
 
 //                userImage.setImageURI(mImageUri);
