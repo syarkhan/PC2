@@ -133,7 +133,7 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
         final Setting currentData = settingsList.get(mholder.getAdapterPosition());
         mholder.txtSettings.setText(currentData.getTxtSettings());
         //mholder.txtViewProfile.setText("View Profile");
-        mholder.imgViewSettings.setImageResource(R.drawable.add_media_icon);
+//        mholder.imgViewSettings.setImageResource(R.drawable.add_media_icon);
         mholder.constraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -193,7 +193,7 @@ public class SettingsRecyclerAdapter extends RecyclerView.Adapter<SettingsRecycl
 
         public SettingsHolder(View itemView) {
             super(itemView);
-            imgViewSettings = (ImageView) itemView.findViewById(R.id.imgViewSettings);
+//            imgViewSettings = (ImageView) itemView.findViewById(R.id.imgViewSettings);
             txtSettings = (TextView) itemView.findViewById(R.id.txtSettings);
             constraintLayout = (ConstraintLayout) itemView.findViewById(R.id.parentLayout);
             //txtViewProfile = (TextView) itemView.findViewById(R.id.txtViewProfile);

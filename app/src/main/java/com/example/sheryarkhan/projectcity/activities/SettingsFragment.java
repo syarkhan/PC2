@@ -40,10 +40,15 @@ public class SettingsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         ArrayList<Setting> settingsList = new ArrayList<>();
-        settingsList.add(new Setting("imgViewLocation","Sheryar Khan"));
+        settingsList.add(new Setting("imgViewLocation","Your Name"));
+        settingsList.add(new Setting("imgViewLocation","Edit Profile"));
         settingsList.add(new Setting("imgViewLocation","Notifications"));
+        settingsList.add(new Setting("imgViewLocation","Location"));
         settingsList.add(new Setting("imgViewLocation","Change Password"));
-        settingsList.add(new Setting("imgViewLocation","Log out"));
+        settingsList.add(new Setting("imgViewLocation","Report a Problem"));
+        settingsList.add(new Setting("imgViewLocation","Privacy Policy"));
+        settingsList.add(new Setting("imgViewLocation","Terms"));
+        settingsList.add(new Setting("imgViewLocation","Log Out"));
 
 
         LinearLayoutManager linearLayoutManager;

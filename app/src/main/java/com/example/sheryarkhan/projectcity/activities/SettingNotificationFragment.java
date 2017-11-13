@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -36,9 +38,9 @@ import java.util.Map;
 public class SettingNotificationFragment extends Fragment {
 
 
-    private ToggleButton toggleBtnTown;
-    private ToggleButton toggleBtnPost;
-    private Button btnSave;
+    private Switch toggleBtnTown;
+    private Switch toggleBtnPost;
+//    private TextView btnSave;
 
 
     public SettingNotificationFragment() {
@@ -58,9 +60,9 @@ public class SettingNotificationFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_setting_notification, container, false);
-        toggleBtnPost = (ToggleButton) view.findViewById(R.id.toggleButtonPost);
-        toggleBtnTown = (ToggleButton) view.findViewById(R.id.toggleButtonTown);
-        btnSave = (Button) view.findViewById(R.id.btnSave);
+        toggleBtnPost = (Switch) view.findViewById(R.id.toggleButtonPost);
+        toggleBtnTown = (Switch) view.findViewById(R.id.toggleButtonTown);
+//        btnSave = (TextView) view.findViewById(R.id.btnSave);
 
         // toggleBtnTown.setChecked(true);
         // toggleBtnPost.setChecked(true);

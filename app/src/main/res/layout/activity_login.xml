@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_background"
+    android:background="@drawable/login_bg_khi"
     tools:context="com.example.sheryarkhan.projectcity.activities.LoginActivity"
-    tools:layout_editor_absoluteY="81dp"
-    tools:layout_editor_absoluteX="0dp">
+    tools:layout_editor_absoluteX="0dp"
+    tools:layout_editor_absoluteY="81dp">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout3"
@@ -20,11 +20,11 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
+        app:layout_constraintHorizontal_bias="0.517"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.45"
-        app:layout_constraintHorizontal_bias="0.517">
+        app:layout_constraintVertical_bias="0.45">
 
         <ImageView
             android:id="@+id/imageView2"
@@ -48,6 +48,7 @@
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
             android:background="@color/textViewBgTracsparent"
             android:ems="10"
             android:hint="Enter Email"
@@ -60,7 +61,6 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            android:layout_marginTop="24dp"
             app:layout_constraintTop_toBottomOf="@+id/imageView2" />
 
         <EditText
