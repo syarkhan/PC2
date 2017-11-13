@@ -1,15 +1,22 @@
 package com.example.sheryarkhan.projectcity.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -25,12 +32,14 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
 import com.example.sheryarkhan.projectcity.utils.ImageCompression;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.adapters.ShareNewsMediaViewPagerAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -68,6 +77,7 @@ public class PostNewsActivity extends AppCompatActivity {
 
     private Button btnMedia;
     private EditText editTextShareNews;
+
     private Uri mImageUri;
     private ViewPager mediaViewPager;
     private TabLayout mediaPagerTabs;
@@ -83,17 +93,22 @@ public class PostNewsActivity extends AppCompatActivity {
     private boolean isLastItem = false;
 
     private static final int REQUEST_OPEN_RESULT_CODE = 0;
+    public static final int PERMISSIONS_MULTIPLE_REQUEST = 123;
 
 
     private static Integer number_of_posts = 0;
 
     private IVolleyResult mResultCallback;
     private VolleyService mVolleyService;
+    private SharedPrefs sharedPrefs;
+    private StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_news);
+        sharedPrefs = new SharedPrefs(this);
+        storageReference = FirebaseStorage.getInstance().getReference();
 
         btnMedia = (Button) findViewById(R.id.btnMedia);
         txtPostNews = (TextView) findViewById(R.id.txtPostNews);
@@ -109,25 +124,52 @@ public class PostNewsActivity extends AppCompatActivity {
 
         firebaseAuth = FirebaseAuth.getInstance();
 
+        String profilePicturePath = sharedPrefs.getProfilePictureFromSharedPref();
+        String username = sharedPrefs.getUsernameFromSharedPref();
+        String userid = sharedPrefs.getUserIdFromSharedPref();
 
+        //databaseReference = FirebaseDatabase.getInstance().getReference();
 
-        SharedPreferences sharedPref = this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        String profilePicturePath = sharedPref.getString("profilepicture", "");
-        String username = sharedPref.getString("username", "");
-
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-
-
-        try {
-            GlideApp.with(this)
-                    .load(profilePicturePath)
-                    .circleCrop()
-                    .transition(DrawableTransitionOptions.withCrossFade(1000))
-                    .error(R.color.link)
-                    .into(imgProfilePic);
-        } catch (Exception ex) {
-            Log.d("error", ex.toString());
+        if (profilePicturePath.equals("")) {
+            StorageReference filePath = storageReference.child("profilepictures").child("profilepic:" + userid);
+            try {
+                GlideApp.with(PostNewsActivity.this)
+                        .load(filePath)
+                        .circleCrop()
+                        .transition(DrawableTransitionOptions.withCrossFade(1000))
+                        .error(R.color.link)
+                        .into(imgProfilePic);
+            } catch (Exception ex) {
+                Log.d("error", ex.toString());
+            }
+        } else {
+            try {
+                GlideApp.with(PostNewsActivity.this)
+                        .load(profilePicturePath)
+                        .circleCrop()
+                        .transition(DrawableTransitionOptions.withCrossFade(1000))
+                        .error(R.color.link)
+                        .into(imgProfilePic);
+            } catch (Exception ex) {
+                Log.d("error", ex.toString());
+            }
         }
+//            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                @Override
+//                public void onSuccess(Uri uri) {
+//                    try {
+//                        GlideApp.with(PostNewsActivity.this)
+//                                .load(uri)
+//                                .circleCrop()
+//                                .transition(DrawableTransitionOptions.withCrossFade(1000))
+//                                .error(R.color.link)
+//                                .into(imgProfilePic);
+//                    } catch (Exception ex) {
+//                        Log.d("error", ex.toString());
+//                    }
+//                }
+//            });
+
 
         txtName.setText(username);
 
@@ -159,8 +201,9 @@ public class PostNewsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = new Intent(PostNewsActivity.this, MediaPickerActivity.class);
-                startActivityForResult(intent, 11);
+                checkAndroidVersion();
+
+
 //                Intent intent1 = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 //                intent1.addCategory(Intent.CATEGORY_OPENABLE);
 //                intent1.setType("image/*");
@@ -188,12 +231,12 @@ public class PostNewsActivity extends AppCompatActivity {
                 };
 
                 Intent intent = new Intent();
-                intent.putExtra("txtPrimary",txtPrimary.getText().toString());
-                intent.putExtra("txtSecondary",txtSecondary.getText().toString());
-                intent.putExtra("editTextShareNews",editTextShareNews.getText().toString());
+                intent.putExtra("txtPrimary", txtPrimary.getText().toString());
+                intent.putExtra("txtSecondary", txtSecondary.getText().toString());
+                intent.putExtra("editTextShareNews", editTextShareNews.getText().toString());
                 intent.putExtra("hashMap", (Serializable) hashMap);
                 //uploadPostDataToFirebase();
-                setResult(RESULT_OK,intent);
+                setResult(RESULT_OK, intent);
                 //startActivity(new Intent(PostNewsActivity.this, NewsFeedActivity.class));
                 finish();
 
@@ -203,9 +246,59 @@ public class PostNewsActivity extends AppCompatActivity {
 
     }
 
+    private void checkAndroidVersion() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkPermission();
 
-    private void uploadPostDataToFirebase()
-    {
+        } else {
+            Intent intent = new Intent(PostNewsActivity.this, MediaPickerActivity.class);
+            startActivityForResult(intent, 11);
+
+        }
+    }
+
+
+    private void checkPermission() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) + ContextCompat
+                .checkSelfPermission(this,
+                        Manifest.permission.CAMERA) + ContextCompat
+                .checkSelfPermission(this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale
+                    (this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale
+                            (this, Manifest.permission.CAMERA) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale
+                            (this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                Snackbar.make(this.findViewById(android.R.id.content),
+                        "Please Grant Permissions to select media",
+                        Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        PERMISSIONS_MULTIPLE_REQUEST);
+                            }
+                        }).show();
+            } else {
+                // TODO : show dialog when user chooses to "NEVER SHOW" the permissions
+                //Toast.makeText(this,"hello",Toast.LENGTH_SHORT).show();
+                requestPermissions(
+                        new String[]{Manifest.permission
+                                .WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
+                        PERMISSIONS_MULTIPLE_REQUEST);
+            }
+        } else {
+            Intent intent = new Intent(PostNewsActivity.this, MediaPickerActivity.class);
+            startActivityForResult(intent, 11);
+        }
+    }
+
+    private void uploadPostDataToFirebase() {
         SharedPreferences sharedPref = PostNewsActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
         final String username = sharedPref.getString("username", "");
         //final String userid = sharedPref.getString("userid", "");
@@ -264,8 +357,8 @@ public class PostNewsActivity extends AppCompatActivity {
 
         if (medias.size() == 0) {
             Long timeStamp = System.currentTimeMillis();
-            PostsPOJO postsPOJO = new PostsPOJO(0,userid,key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
-                    txtPrimary.getText().toString(), txtSecondary.getText().toString(),Collections.<String, Boolean>emptyMap());
+            PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
+                    txtPrimary.getText().toString(), txtSecondary.getText().toString(), Collections.<String, Boolean>emptyMap());
 
 
             Map<String, Object> childUpdates = new HashMap<>();
@@ -322,9 +415,9 @@ public class PostNewsActivity extends AppCompatActivity {
                             if (isLastItem) {
 
                                 Long timeStamp = System.currentTimeMillis();
-                                PostsPOJO postsPOJO = new PostsPOJO(0, userid,key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
+                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
                                         txtPrimary.getText().toString(), txtSecondary.getText().toString(),
-                                        media,Collections.<String, Boolean>emptyMap());
+                                        media, Collections.<String, Boolean>emptyMap());
 
                                 Map<String, Object> childUpdates = new HashMap<>();
                                 childUpdates.put("/posts/" + key, postsPOJO);
@@ -389,9 +482,9 @@ public class PostNewsActivity extends AppCompatActivity {
 
                                 Long timeStamp = System.currentTimeMillis();
 
-                                PostsPOJO postsPOJO = new PostsPOJO(0, userid,key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
+                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews.getText().toString(),
                                         txtPrimary.getText().toString(), txtSecondary.getText().toString(),
-                                        media,Collections.<String, Boolean>emptyMap());
+                                        media, Collections.<String, Boolean>emptyMap());
 
                                 Map<String, Object> childUpdates = new HashMap<>();
                                 childUpdates.put("/posts/" + key, postsPOJO);
@@ -447,8 +540,7 @@ public class PostNewsActivity extends AppCompatActivity {
         setResult(Activity.RESULT_CANCELED);
     }
 
-    private void sendNotificationToUsers(String key)
-    {
+    private void sendNotificationToUsers(String key) {
         Map<String, String> townAndMessage = new HashMap<>();
         townAndMessage.put("town", txtSecondary.getText().toString().replace(" ", "_"));
         townAndMessage.put("message", editTextShareNews.getText().toString());
@@ -527,7 +619,7 @@ public class PostNewsActivity extends AppCompatActivity {
 //                        txtSecondary.setText(town);
 //                    }
 
-                txtPrimary.setTextColor(ContextCompat.getColor(this,R.color.colorAccent));
+                txtPrimary.setTextColor(ContextCompat.getColor(this, R.color.colorAccent));
                 txtPrimary.setVisibility(View.VISIBLE);
                 txtSecondary.setVisibility(View.VISIBLE);
                 imgClearLocations.setVisibility(View.VISIBLE);

@@ -149,7 +149,6 @@
                 android:layout_marginEnd="7dp"
                 android:layout_marginRight="7dp"
                 android:adjustViewBounds="true"
-                android:onClick="uploadImageBuilder"
                 android:scaleType="centerCrop"
                 app:layout_constraintBottom_toBottomOf="@+id/imgUser"
                 app:layout_constraintRight_toRightOf="@+id/imgUser"

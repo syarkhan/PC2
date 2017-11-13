@@ -22,7 +22,7 @@ public class Post {
     private String location;
     @SerializedName("timestamp")
     @Expose
-    private String timestamp;
+    private Long timestamp;
     @SerializedName("Town")
     @Expose
     private String town;
@@ -116,11 +116,11 @@ public class Post {
         this.location = location;
     }
 
-    public String getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 

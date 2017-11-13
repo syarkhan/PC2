@@ -19,7 +19,7 @@ public class User {
     private String username;
     @SerializedName("DateOfJoining")
     @Expose
-    private String dateOfJoining;
+    private Long dateOfJoining;
     @SerializedName("Email")
     @Expose
     private String email;
@@ -86,11 +86,11 @@ public class User {
         this.username = username;
     }
 
-    public String getDateOfJoining() {
+    public Long getDateOfJoining() {
         return dateOfJoining;
     }
 
-    public void setDateOfJoining(String dateOfjoining) {
+    public void setDateOfJoining(Long dateOfjoining) {
         this.dateOfJoining = dateOfjoining;
     }
 

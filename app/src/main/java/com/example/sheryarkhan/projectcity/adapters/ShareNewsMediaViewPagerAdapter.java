@@ -89,6 +89,7 @@ public class ShareNewsMediaViewPagerAdapter extends PagerAdapter {
         final View itemView = layoutInflater.inflate(R.layout.media_viewpager_item,container,false);
         final ImageView imageView = (ImageView) itemView.findViewById(R.id.postMediaImageView);
         final ImageView imgClearMedia = (ImageView) itemView.findViewById(R.id.imgClearMedia);
+        final ImageView imgVideoPlayButton = (ImageView)itemView.findViewById(R.id.imgVideoPlayButton);
         mList.add(itemView);
 //        bitmap = BitmapFactory.decodeFile(hashMapMedia.get(position));
 //        imageView.setImageBitmap(bitmap);
@@ -105,7 +106,9 @@ public class ShareNewsMediaViewPagerAdapter extends PagerAdapter {
 //            }
 //        });
 
-
+if((new ArrayList<>(hashMapMedia.values()).get(position).get(0).equals("2"))){
+    imgVideoPlayButton.setVisibility(View.VISIBLE);
+}
 
         try {
             GlideApp.with(context)

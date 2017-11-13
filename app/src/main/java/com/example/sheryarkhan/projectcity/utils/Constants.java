@@ -18,7 +18,7 @@ public final class Constants {
     public static final String MY_PREFS_NAME = "UserData";
 
     //public static String IP = "project-city.herokuapp.com";
-    public static String IP = "192.168.8.101:3000";
+    public static String IP = "192.168.8.100:3000";
     //public static String IP = "10.0.0.2:3000";
     public static String protocol = "http://";
     public static String addNewPost = "/addNewPost";

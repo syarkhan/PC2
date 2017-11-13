@@ -63,8 +63,9 @@ public class LoginActivity extends AppCompatActivity {
         sharedPrefs = new SharedPrefs(this);
 
 
-        if(firebaseAuth.getCurrentUser() != null){
-            FirebaseMessaging.getInstance().subscribeToTopic("user_"+firebaseAuth.getCurrentUser().getUid());
+        //if(firebaseAuth.getCurrentUser() != null){
+        if(!sharedPrefs.getUserIdFromSharedPref().equals("")) {
+            FirebaseMessaging.getInstance().subscribeToTopic("user_"+sharedPrefs.getUserIdFromSharedPref());
             Intent intent = new Intent(getApplicationContext(),MainActivity.class);
             startActivity(intent);
             finish();

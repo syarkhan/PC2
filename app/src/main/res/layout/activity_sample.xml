@@ -1,148 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/linear"
-    android:orientation="vertical">
+    android:gravity="center_horizontal"
+    android:paddingTop="50dp">
 
-    <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_marginTop="@dimen/feed_item_margin"-->
-        <!--android:background="@drawable/feed_item_rounded_corner"-->
-        <!--android:orientation="vertical"-->
-        <!--android:paddingBottom="@dimens/feed_item_padding_top_bottom"-->
-        <!--android:paddingTop="@dimens/feed_item_padding_top_bottom" >-->
+    <LinearLayout
+        android:id="@+id/native_ad_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"/>
 
-        <!--<LinearLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:orientation="horizontal"-->
-            <!--android:paddingLeft="@dimen/feed_item_padding_left_right"-->
-            <!--android:paddingRight="@dimen/feed_item_padding_left_right" >-->
-
-            <!--&lt;!&ndash;<com.android.volley.toolbox.NetworkImageView&ndash;&gt;-->
-            <!--&lt;!&ndash;android:id="@+id/profilePic"&ndash;&gt;-->
-            <!--&lt;!&ndash;android:layout_width="@dimen/feed_item_profile_pic"&ndash;&gt;-->
-            <!--&lt;!&ndash;android:layout_height="@dimen/feed_item_profile_pic"&ndash;&gt;-->
-            <!--&lt;!&ndash;android:scaleType="fitCenter" >&ndash;&gt;-->
-            <!--&lt;!&ndash;</com.android.volley.toolbox.NetworkImageView>&ndash;&gt;-->
-
-
-            <!--<ImageView-->
-                <!--android:id="@+id/imgProfilePic"-->
-                <!--android:layout_width="@dimen/feed_item_profile_pic"-->
-                <!--android:layout_height="@dimen/feed_item_profile_pic"-->
-                <!--android:src="@drawable/loginbg"-->
-                <!--android:scaleType="fitXY"-->
-                <!--&gt;-->
-            <!--</ImageView>-->
-
-            <!--<LinearLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:orientation="vertical"-->
-                <!--android:paddingLeft="@dimen/feed_item_profile_info_padd" >-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/txtName"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:text="Sheryar Khan"-->
-                    <!--android:fontFamily="sans-serif-smallcaps"-->
-                    <!--android:textSize="@dimen/feed_item_profile_name"-->
-                    <!--android:textStyle="bold" />-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/txtTimeStamp"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:text="20 mins ago"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:textColor="@color/timestamp"-->
-                    <!--android:textSize="@dimen/feed_item_timestamp" />-->
-            <!--</LinearLayout>-->
-        <!--</LinearLayout>-->
-
-        <!--<TextView-->
-            <!--android:id="@+id/txtStatusMsg"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:paddingBottom="5dp"-->
-            <!--android:paddingLeft="@dimen/feed_item_status_pad_left_right"-->
-            <!--android:text="Lorum Ipsum Lorum Ipsum Lorum Ipsum Lorum Ipsum "-->
-            <!--android:paddingRight="@dimen/feed_item_status_pad_left_right"-->
-            <!--android:paddingTop="@dimen/feed_item_status_pad_top" />-->
-
-        <!--<TextView-->
-            <!--android:id="@+id/txtUrl"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:linksClickable="true"-->
-            <!--android:paddingBottom="10dp"-->
-            <!--android:paddingLeft="@dimen/feed_item_status_pad_left_right"-->
-            <!--android:paddingRight="@dimen/feed_item_status_pad_left_right"-->
-            <!--android:textColorLink="@color/link" />-->
-
-
-        <!--<HorizontalScrollView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:id="@+id/horizontalScrollView"-->
-            <!--&gt;-->
-            <!--<LinearLayout-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:orientation="horizontal"-->
-                <!--&gt;-->
-            <!--<ImageView-->
-                <!--android:id="@+id/imgPost"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="250dp"-->
-                <!--android:background="@color/white"-->
-                <!--android:scaleType="fitCenter"-->
-                <!--android:src="@drawable/q1bg"-->
-
-
-                <!--/>-->
-            <!--<ImageView-->
-                <!--android:id="@+id/imgPost2"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="250dp"-->
-                <!--android:background="@color/white"-->
-                <!--android:scaleType="fitCenter"-->
-                <!--android:src="@drawable/discoverbtn"-->
-
-
-                <!--/>-->
-            <!--</LinearLayout>-->
-
-        <!--</HorizontalScrollView>-->
-
-        <!--<Button-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:text="Helpful"-->
-            <!--android:id="@+id/btnHelpful"-->
-            <!--/>-->
-        <!--<Button-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:text="Comments"-->
-            <!--android:id="@+id/btnComments"-->
-
-            <!--/>-->
-
-        <!--&lt;!&ndash;<info.androidhive.listviewfeed.FeedImageView&ndash;&gt;-->
-        <!--&lt;!&ndash;android:id="@+id/feedImage1"&ndash;&gt;-->
-        <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-        <!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;-->
-        <!--&lt;!&ndash;android:background="@color/white"&ndash;&gt;-->
-        <!--&lt;!&ndash;android:scaleType="fitXY"&ndash;&gt;-->
-        <!--&lt;!&ndash;android:visibility="visible" />&ndash;&gt;-->
-
-
-
-    <!--</LinearLayout>-->
-
-</LinearLayout>
+</RelativeLayout>

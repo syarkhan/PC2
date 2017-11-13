@@ -29,6 +29,9 @@ import com.example.sheryarkhan.projectcity.utils.IVolleyResult;
 import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.example.sheryarkhan.projectcity.utils.VolleyService;
 import com.example.sheryarkhan.projectcity.adapters.NewsFeedRecyclerAdapter;
+import com.facebook.ads.AdSettings;
+import com.facebook.ads.NativeAd;
+import com.facebook.ads.NativeAdsManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -92,9 +95,13 @@ public class NewsFeedFragment extends Fragment {
     int counter = 1;
     Query query;
     View view;
+    private boolean mIsLoading = false;
 
 
     private List<Post> postList;
+
+    private NativeAdsManager mAds;
+
     public NewsFeedFragment() {
         // Required empty public constructor
     }
@@ -102,12 +109,11 @@ public class NewsFeedFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        page_num=0;
+        page_num = 0;
         sharedPrefs = new SharedPrefs(getActivity());
         town = sharedPrefs.getTownFromSharedPref();
         URL = changePageNumberURL(page_num);
         String iid = FirebaseInstanceId.getInstance().getToken();
-
 
 
     }
@@ -141,9 +147,13 @@ public class NewsFeedFragment extends Fragment {
         newsFeedRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         linearLayoutManager = new LinearLayoutManager(getActivity());
         newsFeedRecyclerView.setLayoutManager(linearLayoutManager);
-        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList,getActivity());
+        //loadAds();
+        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList, getActivity(),mAds);
         newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
 
+
+
+        loadMoreData();
 //        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
 //        itemAnimator.setAddDuration(1000);
 //        itemAnimator.setRemoveDuration(1000);
@@ -174,7 +184,6 @@ public class NewsFeedFragment extends Fragment {
 //        }
 
 
-
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipeRefreshLayout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -183,16 +192,18 @@ public class NewsFeedFragment extends Fragment {
                 if (vibrator.hasVibrator()) {
                     vibrator.vibrate(30);
                 }
-                recyclerViewProgressBar.setVisibility(View.GONE);
-                txtNetworkError.setVisibility(View.GONE);
-                newsFeedRecyclerView.setVisibility(View.VISIBLE);
+                //recyclerViewProgressBar.setVisibility(View.GONE);
+                //txtNetworkError.setVisibility(View.GONE);
+                //newsFeedRecyclerView.setVisibility(View.VISIBLE);
                 Toast.makeText(getActivity(), "Refreshed", Toast.LENGTH_SHORT).show();
+
+                postList.clear();
+                newsFeedRecyclerAdapter.notifyDataSetChanged();
+                page_num = 0;
+                loadMoreData();
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
-
-
-
 
 
         //loadData();
@@ -274,11 +285,13 @@ public class NewsFeedFragment extends Fragment {
         newsFeedRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
             @Override
             public void onLoadMore(int current_page) {
-                loadMoreData();
+                if (!mIsLoading) {
+                    loadMoreData();
+                }
 
             }
         });
-        //loadData();
+        //
 
         //final boolean mIsLoading = false;
 
@@ -328,7 +341,19 @@ public class NewsFeedFragment extends Fragment {
         return view;
     }
 
-    private String changePageNumberURL(int page_num){
+    private void loadAds() {
+        AdSettings.addTestDevice("d799c50e3b4c9e58d4412f125770179b");
+        String placement_id = "2051713708390959_2051806708381659";
+        mAds = new NativeAdsManager(getActivity(), placement_id, 5);
+        mAds.loadAds();
+        NativeAd ad = mAds.nextNativeAd();
+        //ad.getAdBody();
+
+        int i=0;
+        int a=1;
+    }
+
+    private String changePageNumberURL(int page_num) {
         String townParam;
 //        URI uri = null;
 //        try {
@@ -340,14 +365,14 @@ public class NewsFeedFragment extends Fragment {
 //        }
 
         try {
-            townParam = URLEncoder.encode(town,"UTF-8").replaceAll("\\+", "%20");
+            townParam = URLEncoder.encode(town, "UTF-8").replaceAll("\\+", "%20");
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError("UTF-8 is unknown");
             // or 'throw new AssertionError("Impossible things are happening today. " +
             //                              "Consider buying a lottery ticket!!");'
         }
 
-        return Constants.protocol + Constants.IP + "/TownPosts/10&"+page_num+"&"+ townParam;
+        return Constants.protocol + Constants.IP + "/TownPosts/10&" + page_num + "&" + townParam;
     }
 
     private void setUpVolley() {
@@ -382,36 +407,45 @@ public class NewsFeedFragment extends Fragment {
     }
 
     private void loadData() {
+        mIsLoading = true;
         StringRequest stringRequest = new StringRequest(URL, new Response.Listener<String>() {
 
             @Override
             public void onResponse(String response) {
+                mIsLoading = false;
                 recyclerViewProgressBar.setVisibility(View.GONE);
-                if(response.equals("false")){
+                if (response.equals("false")) {
                     //HelperFunctions.getToastShort(getActivity(),"No more data!");
-                    Toast.makeText(getActivity(),"No more data!",Toast.LENGTH_SHORT).show();
-                }
-                else {
+                    Toast.makeText(getActivity(), "No more data!", Toast.LENGTH_SHORT).show();
+
+                } else {
 
                     GsonBuilder gsonBuilder = new GsonBuilder();
                     Gson gson = gsonBuilder.create();
                     //JSONArray jsonArray = gson.fromJson(response,JSONArray.class);
                     int lastListSize = postList.size();
 
-                    List<Post> list = gson.fromJson(response, new TypeToken<List<Post>>() {}.getType());
+                    List<Post> list = gson.fromJson(response, new TypeToken<List<Post>>() {
+                    }.getType());
                     //postList.addAll(list);
                     //Log.d("volleyposts", postList.toString());
 
                     for (int i = 0; i < list.size(); i++) {
-                        Post item = list.get(i);
+                        final Post item = list.get(i);
 //                        try {
 //                            //JSONObject post = (JSONObject) jsonArray.get(i);
 //                            item = gson.fromJson(jsonArray.getJSONObject(i), Post.class);
 //                        } catch (JSONException e) {
 //                            e.printStackTrace();
 //                        }
-                        postList.add(item);
-                        newsFeedRecyclerAdapter.notifyItemInserted(postList.size());
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                postList.add(item);
+                                newsFeedRecyclerAdapter.notifyItemInserted(postList.size());
+                            }
+                        });
+
                         Log.d("volleyposts", postList.toString());
                     }
 //                newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList);
@@ -433,7 +467,7 @@ public class NewsFeedFragment extends Fragment {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d("VolleyError",error.toString());
+                Log.d("VolleyError", error.toString());
             }
         });
 
@@ -457,8 +491,7 @@ public class NewsFeedFragment extends Fragment {
         });
     }
 
-    public void clearPostsList()
-    {
+    public void clearPostsList() {
         postList.clear();
     }
 

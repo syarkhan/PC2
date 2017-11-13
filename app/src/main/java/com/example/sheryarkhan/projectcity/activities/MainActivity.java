@@ -90,14 +90,18 @@ public class MainActivity extends AppCompatActivity {
     private int mCurrentTabNumber = 0;
     public int counter = -1;
     public boolean isTabClickedTwoTimes = false;
+    SharedPrefs sharedPrefs;
 
     private MainFragment mainFragment;
+    private String URL;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mStack = new Stack<>();
+        sharedPrefs = new SharedPrefs(this);
+
 
         mainFragment = new MainFragment();
 
@@ -361,12 +365,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPrefs sharedPrefs = new SharedPrefs(this);
         final String username = sharedPrefs.getUsernameFromSharedPref();
         final String userid = sharedPrefs.getUserIdFromSharedPref();
-        //SharedPreferences sharedPref = MainActivity.this.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        //final String username = sharedPref.getString("username", "");
-        //final String userid = sharedPref.getString("userid", "");
-
-        //final String userid = firebaseAuth.getCurrentUser().getUid();
-        //String imageURI = sharedPref.getString("profilepicture", "");
+        URL = Constants.protocol + Constants.IP + Constants.addNewPost+"/"+userid;
 
         final String key = databaseReference.child("posts").push().getKey();
 
@@ -423,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (medias.size() == 0) {
             //MONGODB INSERT
-            String URL = Constants.protocol + Constants.IP + Constants.addNewPost+"/"+userid;
+
             Long timestamp = System.currentTimeMillis();
             Map<String, Object> PostData = new HashMap<>();
             PostData.put("UserId", userid);
@@ -533,7 +532,6 @@ public class MainActivity extends AppCompatActivity {
                             if (isLastItem) {
 
                                 //MONGODB INSERT
-                                String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
                                 Long timestamp = System.currentTimeMillis();
                                 Map<String, Object> PostData = new HashMap<>();
                                 PostData.put("UserId", userid);
@@ -624,7 +622,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
                             if (isLastItem) {
                                 //MONGODB INSERT
-                                String URL = Constants.protocol + Constants.IP + Constants.addNewPost;
                                 Long timestamp = System.currentTimeMillis();
                                 Map<String, Object> PostData = new HashMap<>();
                                 PostData.put("UserId", userid);

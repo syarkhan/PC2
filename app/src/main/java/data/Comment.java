@@ -26,7 +26,7 @@ public class Comment {
     private String commentText;
     @SerializedName("timestamp")
     @Expose
-    private String timestamp;
+    private Long timestamp;
     @SerializedName("UserId")
     @Expose
     private String userId;
@@ -42,7 +42,7 @@ public class Comment {
     @Expose
     private UserInfo userInfo;
 
-    public Comment(String commentId, String postId, String commentText, String timestamp, String userId, int likesCount, List<String> likes, UserInfo userInfo) {
+    public Comment(String commentId, String postId, String commentText, Long timestamp, String userId, int likesCount, List<String> likes, UserInfo userInfo) {
         this.commentId = commentId;
         this.postId = postId;
         this.commentText = commentText;
@@ -86,11 +86,11 @@ public class Comment {
         this.commentText = commentText;
     }
 
-    public String getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -119,7 +119,7 @@ public class Comment {
     }
 
 
-    public class UserInfo {
+    public static class UserInfo {
 
         @SerializedName("Username")
         @Expose
@@ -127,6 +127,11 @@ public class Comment {
         @SerializedName("ProfilePicture")
         @Expose
         private String profilePicture;
+
+        public UserInfo(String username, String profilePicture) {
+            this.username = username;
+            this.profilePicture = profilePicture;
+        }
 
         public String getUsername() {
             return username;

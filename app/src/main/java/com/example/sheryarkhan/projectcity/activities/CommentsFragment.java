@@ -22,6 +22,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.EndlessRecyclerOnScrollListener;
 import com.example.sheryarkhan.projectcity.utils.FirebasePushNotificationMethods;
 import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 import com.example.sheryarkhan.projectcity.adapters.CommentsListAdapter;
@@ -43,6 +44,8 @@ import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +71,9 @@ public class CommentsFragment extends Fragment {
 
     private String postId;
     private SharedPrefs sharedPrefs;
+    private String URL;
+    private int page_num;
+    private boolean mIsLoading = false;
 
 
     public CommentsFragment() {
@@ -78,7 +84,7 @@ public class CommentsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        page_num=0;
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
@@ -89,7 +95,7 @@ public class CommentsFragment extends Fragment {
 
         postId = getPostIdFromBundle();
 
-
+        URL = changePageNumberURL(page_num);
         query = databaseReference.child("postcomments").child(postId).child("comments");
 
     }
@@ -110,6 +116,16 @@ public class CommentsFragment extends Fragment {
         commentsListAdapter = new CommentsListAdapter(commentsList);
         commentsRecyclerView.setAdapter(commentsListAdapter);
 
+        commentsRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
+            @Override
+            public void onLoadMore(int current_page) {
+                if(!mIsLoading) {
+                    loadMoreData();
+                }
+
+            }
+        });
+
         editTextComment = (EditText) view.findViewById(R.id.editTextComment);
 
         backButton = (ImageButton) view.findViewById(R.id.backButton);
@@ -125,7 +141,7 @@ public class CommentsFragment extends Fragment {
             }
         });
 
-        loadData();
+        loadMoreData();
 
         sendMessageBtn = (ImageButton) view.findViewById(R.id.sendMessageBtn);
         sendMessageBtn.setOnClickListener(new View.OnClickListener() {
@@ -133,13 +149,22 @@ public class CommentsFragment extends Fragment {
             public void onClick(View view) {
                 //Send message to firebase
 
-                Toast.makeText(getActivity(),"Posting Comment",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Posting Comment", Toast.LENGTH_SHORT).show();
                 final String userid = sharedPrefs.getUserIdFromSharedPref();
+                final String username = sharedPrefs.getUsernameFromSharedPref();
+                final String profilepic = sharedPrefs.getProfilePictureFromSharedPref();
                 final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
                         Constants.addNewPostComment;
 
                 final String commentText = editTextComment.getText().toString();
                 Long timestamp = System.currentTimeMillis();
+                //Comment.UserInfo userInfo = new Comment.UserInfo()
+                Comment comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new Comment.UserInfo(username, profilepic));
+                commentsList.add(0, comment);
+                commentsListAdapter.notifyItemInserted(0);
+                commentsRecyclerView.smoothScrollToPosition(0);
+
+
                 //Comment comment = new Comment(postId, commentText, timestamp.toString(), userid, 0,null);
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 Gson gson = gsonBuilder.create();
@@ -155,8 +180,8 @@ public class CommentsFragment extends Fragment {
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, new JSONObject(PostCommentData), new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Log.d("volleyadd",response.toString());
-                        Toast.makeText(getActivity(),"Posting Done",Toast.LENGTH_SHORT).show();
+                        Log.d("volleyadd", response.toString());
+                        Toast.makeText(getActivity(), "Posting Done", Toast.LENGTH_SHORT).show();
                         //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                     }
                 }, new Response.ErrorListener() {
@@ -215,6 +240,8 @@ public class CommentsFragment extends Fragment {
 //            }
 //        });
 
+
+
         return view;
     }
 
@@ -228,28 +255,60 @@ public class CommentsFragment extends Fragment {
 
     }
 
+    private String changePageNumberURL(int page_num){
+        //String townParam;
+//        URI uri = null;
+//        try {
+//            uri = new URI(Constants.protocol ,null, Constants.IP, "/TownPosts/5&"+page_num+"&"+ town.replace("_"," "));
+//            String request = uri.toASCIIString();
+//            Log.d("urlencode",request);
+//        } catch (URISyntaxException e) {
+//            e.printStackTrace();
+//        }
+
+//        try {
+//            townParam = URLEncoder.encode(town,"UTF-8").replaceAll("\\+", "%20");
+//        } catch (UnsupportedEncodingException e) {
+//            throw new AssertionError("UTF-8 is unknown");
+//            // or 'throw new AssertionError("Impossible things are happening today. " +
+//            //                              "Consider buying a lottery ticket!!");'
+//        }
+
+        return Constants.protocol + Constants.IP + Constants.getPostComments+"/10&"+page_num+"&"+postId;
+    }
+
+    private void loadMoreData() {
+
+
+        URL = changePageNumberURL(page_num);
+        Log.d("commenturl",URL);
+        page_num++;
+        //currentPage++;
+
+        loadData();
+    }
+
     private void loadData() {
-
-
-String URL = Constants.protocol + Constants.IP + Constants.getPostComments+"/"+ postId;
+        mIsLoading = true;
+        //URL = Constants.protocol + Constants.IP + Constants.getPostComments + "/" + postId;
         StringRequest stringRequest = new StringRequest(URL, new Response.Listener<String>() {
 
             @Override
             public void onResponse(String response) {
-
+                mIsLoading = false;
                 //recyclerViewProgressBar.setVisibility(View.GONE);
-                if(response.equals("false")){
+                if (response.equals("false")) {
                     //HelperFunctions.getToastShort(getActivity(),"No more data!");
-                    Toast.makeText(getActivity(),"No more data!",Toast.LENGTH_SHORT).show();
-                }
-                else {
+                    Toast.makeText(getActivity(), "No more data!", Toast.LENGTH_SHORT).show();
+                } else {
 
                     GsonBuilder gsonBuilder = new GsonBuilder();
                     Gson gson = gsonBuilder.create();
                     //JSONArray jsonArray = gson.fromJson(response,JSONArray.class);
                     //int lastListSize = postList.size();
 
-                    List<Comment> list = gson.fromJson(response, new TypeToken<List<Comment>>() {}.getType());
+                    List<Comment> list = gson.fromJson(response, new TypeToken<List<Comment>>() {
+                    }.getType());
                     //postList.addAll(list);
                     //Log.d("volleyposts", postList.toString());
 
@@ -272,7 +331,7 @@ String URL = Constants.protocol + Constants.IP + Constants.getPostComments+"/"+ 
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d("VolleyError",error.toString());
+                Log.d("VolleyError", error.toString());
             }
         });
 
