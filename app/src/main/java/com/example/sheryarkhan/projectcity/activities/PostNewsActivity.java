@@ -83,6 +83,7 @@ public class PostNewsActivity extends AppCompatActivity {
     private TabLayout mediaPagerTabs;
     private TextView txtName, txtPrimary, txtSecondary, txtPostLocation, txtPostNews;
     private ImageView imgClearLocations, imgProfilePic;
+    private TextView txtCancel;
 
     private DatabaseReference databaseReference;
 
@@ -121,6 +122,7 @@ public class PostNewsActivity extends AppCompatActivity {
         mediaPagerTabs = (TabLayout) findViewById(R.id.mediaPagerTabs);
         imgClearLocations = (ImageView) findViewById(R.id.imgClearLocations);
         imgProfilePic = (ImageView) findViewById(R.id.imgProfilePic);
+        txtCancel = (TextView) findViewById(R.id.txtCancel);
 
         firebaseAuth = FirebaseAuth.getInstance();
 
@@ -170,7 +172,12 @@ public class PostNewsActivity extends AppCompatActivity {
 //                }
 //            });
 
-
+        txtCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
         txtName.setText(username);
 
         imgClearLocations.setOnClickListener(new View.OnClickListener() {

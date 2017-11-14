@@ -16,6 +16,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.sheryarkhan.projectcity.R;
@@ -42,7 +43,7 @@ public class MediaPickerActivity extends AppCompatActivity {
 
 
 //    String[] columns = { MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID };
-//    final String orderBy = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC"; asdas
+//    final String orderBy = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC";
 
     String[] columns = {MediaStore.Files.FileColumns._ID,
             MediaStore.Files.FileColumns.DATA,
@@ -61,7 +62,8 @@ public class MediaPickerActivity extends AppCompatActivity {
 
     RecyclerView customMediaRecyclerView;
     MediaPickerRecyclerAdapter mediaPickerRecyclerAdapter;
-    Button btnSelectMedia;
+    TextView btnSelectMedia;
+    TextView btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +71,7 @@ public class MediaPickerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_media_picker);
 
         customMediaRecyclerView = (RecyclerView) findViewById(R.id.customMediaRecyclerView);
-        btnSelectMedia = (Button) findViewById(R.id.btnSelectMedia);
+        btnSelectMedia = (TextView) findViewById(R.id.btnSelectMedia);
 
         btnSelectMedia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,7 +159,16 @@ public class MediaPickerActivity extends AppCompatActivity {
         customMediaRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         mediaPickerRecyclerAdapter = new MediaPickerRecyclerAdapter(arrPath);
         customMediaRecyclerView.setAdapter(mediaPickerRecyclerAdapter);
+        btnBack = (TextView) findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
     }
+
+
 
     @Override
     public void onBackPressed() {
