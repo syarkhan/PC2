@@ -28,6 +28,7 @@ public final class Constants {
     public static String addOrRemoveUserLikeToPost = "/addOrRemoveUserLikeToPost";
     public static String addNewPostComment = "/addNewPostComment";
     public static String getPostComments = "/getPostComments";
+    public static String getNotifications = "/getNotifications";
 
     public static final String sendTownPostNotification = "/sendTownPostNotification";
     public static final String sendPostLikeNotification = "/sendPostLikeNotification";

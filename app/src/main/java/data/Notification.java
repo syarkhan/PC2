@@ -1,55 +1,149 @@
 package data;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by Sheryar Khan on 11/1/2017.
  */
 
+
+
+
 public class Notification {
 
-    private String postid;
-    private String profilepic;
-    private String notification;
-    private Long timestamp;
+    @SerializedName("_id")
+    @Expose
+    private String id;
+    @SerializedName("NotificationType")
+    @Expose
+    private String notificationType;
+    @SerializedName("timestamp")
+    @Expose
+    private String timestamp;
+    @SerializedName("PostId")
+    @Expose
+    private String postId;
+    @SerializedName("Read")
+    @Expose
+    private Boolean read;
+    @SerializedName("CommentInfo")
+    @Expose
+    private CommentInfo commentInfo;
+    @SerializedName("PostInfo")
+    @Expose
+    private PostInfo postInfo;
+    @SerializedName("UserInfo")
+    @Expose
+    private UserInfo userInfo;
 
-    public Notification(String postid, String profilepic, String notification, Long timestamp) {
-        this.postid = postid;
-        this.profilepic = profilepic;
-        this.notification = notification;
-        this.timestamp = timestamp;
+    public String getId() {
+        return id;
     }
 
-    public Notification() {
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getPostid() {
-        return postid;
+    public String getNotificationType() {
+        return notificationType;
     }
 
-    public void setPostid(String postid) {
-        this.postid = postid;
+    public void setNotificationType(String notificationType) {
+        this.notificationType = notificationType;
     }
 
-    public String getProfilepic() {
-        return profilepic;
-    }
-
-    public void setProfilepic(String profilepic) {
-        this.profilepic = profilepic;
-    }
-
-    public String getNotification() {
-        return notification;
-    }
-
-    public void setNotification(String notification) {
-        this.notification = notification;
-    }
-
-    public Long getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Long timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
+
+    public String getPostId() {
+        return postId;
+    }
+
+    public void setPostId(String postId) {
+        this.postId = postId;
+    }
+
+    public Boolean getRead() {
+        return read;
+    }
+
+    public void setRead(Boolean read) {
+        this.read = read;
+    }
+
+    public CommentInfo getCommentInfo() {
+        return commentInfo;
+    }
+
+    public void setCommentInfo(CommentInfo commentInfo) {
+        this.commentInfo = commentInfo;
+    }
+
+    public PostInfo getPostInfo() {
+        return postInfo;
+    }
+
+    public void setPostInfo(PostInfo postInfo) {
+        this.postInfo = postInfo;
+    }
+
+    public UserInfo getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
+    }
+
+    public static class CommentInfo {
+
+        @SerializedName("CommentText")
+        @Expose
+        private String commentText;
+        @SerializedName("LikesCount")
+        @Expose
+        private Integer likesCount;
+
+        public String getCommentText() {
+            return commentText;
+        }
+
+        public void setCommentText(String commentText) {
+            this.commentText = commentText;
+        }
+
+        public Integer getLikesCount() {
+            return likesCount;
+        }
+
+        public void setLikesCount(Integer likesCount) {
+            this.likesCount = likesCount;
+        }
+
+    }
+
+    public static class PostInfo {
+
+        @SerializedName("PostText")
+        @Expose
+        private String postText;
+
+        public String getPostText() {
+            return postText;
+        }
+
+        public void setPostText(String postText) {
+            this.postText = postText;
+        }
+
+    }
+
 }
+
+

@@ -44,7 +44,7 @@ import java.util.Map;
  */
 
 
-//android.support.v7.widget.AppCompatImageView
+//android.support.v7.widget.AppCompatImageView hj
 
 public class ImagesViewPager extends android.support.v7.widget.AppCompatImageView{
 

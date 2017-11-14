@@ -53,6 +53,7 @@ import java.util.Map;
 
 import data.Comment;
 import data.Post;
+import data.UserInfo;
 
 public class CommentsFragment extends Fragment {
     private ImageButton backButton;
@@ -159,7 +160,7 @@ public class CommentsFragment extends Fragment {
                 final String commentText = editTextComment.getText().toString();
                 Long timestamp = System.currentTimeMillis();
                 //Comment.UserInfo userInfo = new Comment.UserInfo()
-                Comment comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new Comment.UserInfo(username, profilepic));
+                Comment comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new UserInfo(username, profilepic));
                 commentsList.add(0, comment);
                 commentsListAdapter.notifyItemInserted(0);
                 commentsRecyclerView.smoothScrollToPosition(0);
