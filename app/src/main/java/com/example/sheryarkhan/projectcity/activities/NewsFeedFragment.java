@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
@@ -372,7 +373,7 @@ public class NewsFeedFragment extends Fragment {
             //                              "Consider buying a lottery ticket!!");'
         }
 
-        return Constants.protocol + Constants.IP + "/TownPosts/10&" + page_num + "&" + townParam;
+        return Constants.protocol + Constants.IP + Constants.getTownPosts+"/10&" + page_num + "&" + townParam;
     }
 
     private void setUpVolley() {
@@ -400,6 +401,7 @@ public class NewsFeedFragment extends Fragment {
 
 
         URL = changePageNumberURL(page_num);
+        Log.d("URL",URL);
         page_num++;
         //currentPage++;
 
@@ -468,27 +470,44 @@ public class NewsFeedFragment extends Fragment {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("VolleyError", error.toString());
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        recyclerViewProgressBar.setVisibility(View.GONE);
+                    }
+                });
             }
         });
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(stringRequest);
-        stringRequest.setRetryPolicy(new RetryPolicy() {
-            @Override
-            public int getCurrentTimeout() {
-                return 50000;
-            }
-
-            @Override
-            public int getCurrentRetryCount() {
-                return 50000;
-            }
-
-            @Override
-            public void retry(VolleyError error) throws VolleyError {
-                recyclerViewProgressBar.setVisibility(View.GONE);
-            }
-        });
+//        stringRequest.setRetryPolicy(new RetryPolicy() {
+//            @Override
+//            public int getCurrentTimeout() {
+//                return 50000;
+//            }
+//
+//            @Override
+//            public int getCurrentRetryCount() {
+//                return 50000;
+//            }
+//
+//            @Override
+//            public void retry(VolleyError error) throws VolleyError {
+//                Log.d("VolleyRetryError", error.toString());
+////                getActivity().runOnUiThread(new Runnable() {
+////                    @Override
+////                    public void run() {
+////                        recyclerViewProgressBar.setVisibility(View.GONE);
+////                    }
+////                });
+//
+//            }
+//        });
     }
 
     public void clearPostsList() {

@@ -1,6 +1,7 @@
 package com.example.sheryarkhan.projectcity.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -78,6 +79,19 @@ public class NotificationsFragment extends Fragment {
         notificationsRecyclerView.setAdapter(notificationsRecyclerAdapter);
 
         loadMoreData();
+
+
+        notificationsRecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(getActivity(), new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Log.d("itemclicked1","ad");
+                final String postid = notificationsRecyclerAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), NotificationPostActivity.class);
+                intent.putExtra("postId",postid);
+                intent.putExtra("userId",sharedPrefs.getUserIdFromSharedPref());
+                getActivity().startActivity(intent);
+            }
+        }));
 
         notificationsRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
             @Override

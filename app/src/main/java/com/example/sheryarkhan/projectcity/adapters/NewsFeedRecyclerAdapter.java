@@ -515,84 +515,86 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 //                queue.add(jsonObjectRequest);
 
 
-                databaseReference.child("posts/" + currentData.getPostId()).runTransaction(new Transaction.Handler() {
-                    @Override
-                    public Transaction.Result doTransaction(MutableData mutableData) {
-                        PostsPOJO postsPOJO = mutableData.getValue(PostsPOJO.class);
 
-                        if (postsPOJO == null) {
-                            return Transaction.success(mutableData);
-                        }
 
-                        if (postsPOJO.getLikes() != null) {
-
-                            if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
-                                // Unstar the post and remove self from stars
-                                postsPOJO.likesCount = postsPOJO.likesCount - 1;
-                                mholder.likesCount = mholder.likesCount - 1;
-                                postsPOJO.getLikes().remove(firebaseUser.getUid());
-                                //isLiked = false;
-//                                ((MainActivity) context).runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-//                                    }
-//                                });
-                                //mholder.txtLikes.setText(likesCount +" "+ context.getResources().getString(R.string.likes_dot));
-                            } else {
-                                // Star the post and add self to stars
-                                postsPOJO.likesCount = postsPOJO.likesCount + 1;
-                                mholder.likesCount = mholder.likesCount + 1;
-                                postsPOJO.getLikes().put(firebaseUser.getUid(), true);
-                                //isLiked = true;
-//                                ((MainActivity) context).runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-//                                    }
-//                                });
-                            }
-                        }
-                        // Set value and report transaction success
-                        mutableData.setValue(postsPOJO);
-                        return Transaction.success(mutableData);
-                    }
-
-                    @Override
-                    public void onComplete(DatabaseError databaseError, boolean commited,
-                                           DataSnapshot dataSnapshot) {
-
-                        PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
-                        if (commited) {
-                            //transaction successfully completed
-
-                            if (postsPOJO.getLikes() != null) {
-                                mholder.txtLikes.setText(mholder.likesCount + " " + context.getResources().getString(R.string.likes_dot));
-                                if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
-                                    //mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-
-                                    if (!firebaseUser.getUid().equals(postsPOJO.getuserid())) {
-                                        //sendNotificationToUsers(postsPOJO.getPostid(), postsPOJO.getuserid());
-                                        FirebasePushNotificationMethods.sendPostLikeNotification(currentData.getUserId(),
-                                                firebaseUser.getUid(), currentData.getPostText(), currentData.getPostId(), context);
-                                    }
-                                    Toast.makeText(context, "liked", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(context, "unliked", Toast.LENGTH_SHORT).show();
-                                    //mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-                                }
-                            }
-                        } else {
-                            //aborted or an error occurred
+//                databaseReference.child("posts/" + currentData.getPostId()).runTransaction(new Transaction.Handler() {
+//                    @Override
+//                    public Transaction.Result doTransaction(MutableData mutableData) {
+//                        PostsPOJO postsPOJO = mutableData.getValue(PostsPOJO.class);
 //
-                            Toast.makeText(context, "liked revoked", Toast.LENGTH_SHORT).show();
-//                            mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-                        }
-
-                        // Transaction completed
-                        Log.d("transaction completed", "postTransaction:onComplete:" + databaseError);
-                    }
-                });
+//                        if (postsPOJO == null) {
+//                            return Transaction.success(mutableData);
+//                        }
+//
+//                        if (postsPOJO.getLikes() != null) {
+//
+//                            if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
+//                                // Unstar the post and remove self from stars
+//                                postsPOJO.likesCount = postsPOJO.likesCount - 1;
+//                                mholder.likesCount = mholder.likesCount - 1;
+//                                postsPOJO.getLikes().remove(firebaseUser.getUid());
+//                                //isLiked = false;
+////                                ((MainActivity) context).runOnUiThread(new Runnable() {
+////                                    @Override
+////                                    public void run() {
+////                                        mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+////                                    }
+////                                });
+//                                //mholder.txtLikes.setText(likesCount +" "+ context.getResources().getString(R.string.likes_dot));
+//                            } else {
+//                                // Star the post and add self to stars
+//                                postsPOJO.likesCount = postsPOJO.likesCount + 1;
+//                                mholder.likesCount = mholder.likesCount + 1;
+//                                postsPOJO.getLikes().put(firebaseUser.getUid(), true);
+//                                //isLiked = true;
+////                                ((MainActivity) context).runOnUiThread(new Runnable() {
+////                                    @Override
+////                                    public void run() {
+////                                        mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+////                                    }
+////                                });
+//                            }
+//                        }
+//                        // Set value and report transaction success
+//                        mutableData.setValue(postsPOJO);
+//                        return Transaction.success(mutableData);
+//                    }
+//
+//                    @Override
+//                    public void onComplete(DatabaseError databaseError, boolean commited,
+//                                           DataSnapshot dataSnapshot) {
+//
+//                        PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
+//                        if (commited) {
+//                            //transaction successfully completed
+//
+//                            if (postsPOJO.getLikes() != null) {
+//                                mholder.txtLikes.setText(mholder.likesCount + " " + context.getResources().getString(R.string.likes_dot));
+//                                if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
+//                                    //mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+//
+//                                    if (!firebaseUser.getUid().equals(postsPOJO.getuserid())) {
+//                                        //sendNotificationToUsers(postsPOJO.getPostid(), postsPOJO.getuserid());
+//                                        FirebasePushNotificationMethods.sendPostLikeNotification(currentData.getUserId(),
+//                                                firebaseUser.getUid(), currentData.getPostText(), currentData.getPostId(), context);
+//                                    }
+//                                    Toast.makeText(context, "liked", Toast.LENGTH_SHORT).show();
+//                                } else {
+//                                    Toast.makeText(context, "unliked", Toast.LENGTH_SHORT).show();
+//                                    //mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+//                                }
+//                            }
+//                        } else {
+//                            //aborted or an error occurred
+////
+//                            Toast.makeText(context, "liked revoked", Toast.LENGTH_SHORT).show();
+////                            mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+//                        }
+//
+//                        // Transaction completed
+//                        Log.d("transaction completed", "postTransaction:onComplete:" + databaseError);
+//                    }
+//                });
 
 
             }

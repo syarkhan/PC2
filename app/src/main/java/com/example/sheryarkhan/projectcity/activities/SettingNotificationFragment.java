@@ -67,6 +67,7 @@ public class SettingNotificationFragment extends Fragment {
         // toggleBtnTown.setChecked(true);
         // toggleBtnPost.setChecked(true);
         String iid = FirebaseInstanceId.getInstance().getToken();
+        Log.d("iidtoken",iid);
 
 
         String url = "https://iid.googleapis.com/iid/info/"+iid+"?details=true";
@@ -80,8 +81,12 @@ public class SettingNotificationFragment extends Fragment {
             public void onResponse(JSONObject response) {
                 Log.d("VolleySuccess",response.toString());
                 try {
-                    Boolean isTown = response.getJSONObject("rel").getJSONObject("topics").has(town);
+                    Boolean isTown = response.getJSONObject("rel").getJSONObject("topics").has(town.replace(" ","_"));
                     Boolean isPost = response.getJSONObject("rel").getJSONObject("topics").has(userid);
+
+                    Log.d("isnotitown1",town +" "+ town.replace(" ","_"));
+                    Log.d("isnotitown2",isTown.toString());
+                    Log.d("isnotipost",isPost.toString());
                     toggleBtnTown.setChecked(isTown);
                     toggleBtnPost.setChecked(isPost);
                    // Toast.makeText(getActivity(),jsonObject.toString(),Toast.LENGTH_SHORT).show();
@@ -125,10 +130,13 @@ public class SettingNotificationFragment extends Fragment {
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if(isChecked){
                     //is Enable
-                    FirebaseMessaging.getInstance().subscribeToTopic(town);
+                    FirebaseMessaging.getInstance().subscribeToTopic(town.replace(" ","_"));
+                    Log.d("subtrue","");
                 }else {
                     //disable
-                    FirebaseMessaging.getInstance().unsubscribeFromTopic(town);
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(town.replace(" ","_"));
+                    Log.d("subtrue","");
+
                 }
             }
         });

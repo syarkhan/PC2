@@ -4,6 +4,7 @@ package com.example.sheryarkhan.projectcity.adapters;
  * Created by Sheryar Khan on 9/12/2017.
  */
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -52,6 +53,7 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
     private GoogleApiClient mGoogleApiClient;
     private LatLngBounds mBounds;
     private AutocompleteFilter mPlaceFilter;
+    AutocompletePredictionBuffer autocompletePredictions;
 
     public static List <Address> addresses;
     private ArrayList resultList;
@@ -119,7 +121,7 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
             // Submit the query to the autocomplete API and retrieve a PendingResult that will
             // contain the results when the query completes.
 
-            PendingResult<AutocompletePredictionBuffer> results =
+            final PendingResult<AutocompletePredictionBuffer> results =
                     Places.GeoDataApi
                             .getAutocompletePredictions(mGoogleApiClient, constraint.toString(),
                                     mBounds, mPlaceFilter);
@@ -128,8 +130,11 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
             // for a result from the API.
 
 
-            AutocompletePredictionBuffer autocompletePredictions = results
-                    .await(60, TimeUnit.SECONDS);
+
+                    autocompletePredictions = results
+                            .await(60, TimeUnit.SECONDS);
+
+
 
             // Confirm that the query completed successfully, otherwise return null
             final Status status = autocompletePredictions.getStatus();

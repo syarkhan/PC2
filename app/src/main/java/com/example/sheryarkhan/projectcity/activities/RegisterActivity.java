@@ -44,7 +44,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -197,30 +200,48 @@ public class RegisterActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(JSONObject response) {
                             Log.d("VolleyUserAdd",response.toString());
-                            sharedPrefs.setTownToSharedPref(Town);
-                            sharedPrefs.setUserIdToSharedPref(user.getUid());
-                            sharedPrefs.setUsernameToSharedPref(username);
+                            Boolean isSuccess=false;
 
-                            //Subscribe to notifications and go to MainActivity
+                            try {
+                                isSuccess = response.getBoolean("success");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            if(isSuccess) {
+                                sharedPrefs.setTownToSharedPref(Town);
+                                sharedPrefs.setUserIdToSharedPref(user.getUid());
+                                sharedPrefs.setUsernameToSharedPref(username);
 
-                            //User subscription
-                            FirebaseMessaging.getInstance().subscribeToTopic("user_"+user.getUid());
+                                //Subscribe to notifications and go to MainActivity
 
-                            //Town subscription
-                            FirebaseMessaging.getInstance().subscribeToTopic(Town.replace(" ","_"));
+                                //User subscription
+                                FirebaseMessaging.getInstance().subscribeToTopic("user_" + user.getUid());
 
-                            progressDialog.dismiss();
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class)
-                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            finish();
-                            startActivity(intent);
+                                //Town subscription
+                                FirebaseMessaging.getInstance().subscribeToTopic(Town.replace(" ", "_"));
 
-
+                                progressDialog.dismiss();
+                                Intent intent = new Intent(getApplicationContext(), MainActivity.class)
+                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                finish();
+                                startActivity(intent);
+                            }else{
+                                progressDialog.dismiss();
+                                Toast.makeText(RegisterActivity.this,"Could not create new user, please try again.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             Log.d("VolleyUserError", error.toString());
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressDialog.dismiss();
+                                    Toast.makeText(RegisterActivity.this,"Network Error!",Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     });
 
@@ -285,11 +306,11 @@ public class RegisterActivity extends AppCompatActivity {
 
                     } catch (FirebaseNetworkException e) {
 
-                        Toast.makeText(getApplicationContext(), "Network Error", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Network Error!", Toast.LENGTH_LONG).show();
 
 
                     } catch (Exception e) {
-                        Toast.makeText(getApplicationContext(), "Server error", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Network Error!", Toast.LENGTH_LONG).show();
 
                     }
 

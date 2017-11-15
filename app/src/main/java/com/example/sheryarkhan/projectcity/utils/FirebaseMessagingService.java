@@ -7,9 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.NotificationPostActivity;
@@ -69,19 +71,29 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     private void sendNotification(String title, String message,String postId) {
         Intent intent = new Intent(this, NotificationPostActivity.class);
         intent.putExtra("postId",postId);
+//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+//        stackBuilder.addParentStack(NotificationPostActivity.class);
+//        stackBuilder.addNextIntent(intent);
+//        stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_ONE_SHOT);
 
         Bitmap bitmapIcon = BitmapFactory.decodeResource(getResources(), R.mipmap.projectcityicon);
 
+//        Notification notification = new Notification.BigTextStyle(builder)
+//                .bigText(myText).build();
+
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.projectcityicon)
                 .setLargeIcon(bitmapIcon)
+                .setColor(Color.BLUE)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setPriority(Notification.PRIORITY_HIGH)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                 .setContentIntent(pendingIntent);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

@@ -439,7 +439,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(JSONObject response) {
                     Log.d("volleyadd",response.toString());
-                    FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                 }
             }, new Response.ErrorListener() {
                 @Override
@@ -548,7 +548,7 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void onResponse(JSONObject response) {
                                         Log.d("volleyadd",response.toString());
-                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                                     }
                                 }, new Response.ErrorListener() {
                                     @Override

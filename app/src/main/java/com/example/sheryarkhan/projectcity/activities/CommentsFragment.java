@@ -71,6 +71,7 @@ public class CommentsFragment extends Fragment {
     private Query query;
 
     private String postId;
+    private String userIdOfPost;
     private SharedPrefs sharedPrefs;
     private String URL;
     private int page_num;
@@ -95,6 +96,7 @@ public class CommentsFragment extends Fragment {
 
 
         postId = getPostIdFromBundle();
+        userIdOfPost = getUserIdOfPostFromBundle();
 
         URL = changePageNumberURL(page_num);
         query = databaseReference.child("postcomments").child(postId).child("comments");
@@ -154,13 +156,20 @@ public class CommentsFragment extends Fragment {
                 final String userid = sharedPrefs.getUserIdFromSharedPref();
                 final String username = sharedPrefs.getUsernameFromSharedPref();
                 final String profilepic = sharedPrefs.getProfilePictureFromSharedPref();
-                final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+                final String addNewCommentURL= Constants.protocol + Constants.IP +
                         Constants.addNewPostComment;
 
                 final String commentText = editTextComment.getText().toString();
                 Long timestamp = System.currentTimeMillis();
                 //Comment.UserInfo userInfo = new Comment.UserInfo()
-                Comment comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new UserInfo(username, profilepic));
+                Comment comment;
+                if(profilepic.equals("")){
+                    comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new UserInfo(username, null));
+                }else{
+                    comment = new Comment(null, postId, commentText, timestamp, userid, 0, null, new UserInfo(username, profilepic));
+                }
+
+                Log.d("newComment",comment.toString());
                 commentsList.add(0, comment);
                 commentsListAdapter.notifyItemInserted(0);
                 commentsRecyclerView.smoothScrollToPosition(0);
@@ -171,6 +180,8 @@ public class CommentsFragment extends Fragment {
                 Gson gson = gsonBuilder.create();
                 //String jsonObject = gson.toJson(comment);
 
+                Map<String,Map<String, Object>> Data = new HashMap<>();
+
                 Map<String, Object> PostCommentData = new HashMap<>();
                 PostCommentData.put("UserId", userid);
                 PostCommentData.put("PostId", postId);
@@ -178,7 +189,20 @@ public class CommentsFragment extends Fragment {
                 PostCommentData.put("timestamp", timestamp.toString());
                 PostCommentData.put("LikesCount", 0);
 
-                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, new JSONObject(PostCommentData), new Response.Listener<JSONObject>() {
+                Map<String, Object> NotificationData = new HashMap<>();
+                NotificationData.put("ByUserId", userid);
+                NotificationData.put("ToUserId", userIdOfPost);
+                NotificationData.put("PostId", postId);
+                NotificationData.put("NotificationType", "post_comment");
+                NotificationData.put("Read", false);
+                NotificationData.put("timestamp", timestamp.toString());
+                //PostCommentData.put("CommentId", timestamp.toString());
+
+
+                Data.put("PostCommentData",PostCommentData);
+                Data.put("NotificationData",NotificationData);
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, addNewCommentURL, new JSONObject(Data), new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d("volleyadd", response.toString());

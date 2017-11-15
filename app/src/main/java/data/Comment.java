@@ -119,7 +119,20 @@ public class Comment {
     }
 
 
-
+    @Override
+    public String toString() {
+        return "Comment{" +
+                "commentId='" + commentId + '\'' +
+                ", postId='" + postId + '\'' +
+                ", commentText='" + commentText + '\'' +
+                ", timestamp=" + timestamp +
+                ", userId='" + userId + '\'' +
+                ", likesCount=" + likesCount +
+                ", likes=" + likes +
+                ", username=" + userInfo.getUsername() +
+                ", profilepic=" + userInfo.getProfilePicture() +
+                '}';
+    }
 }
 
 

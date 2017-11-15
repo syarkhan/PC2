@@ -123,7 +123,11 @@ public class LoginActivity extends AppCompatActivity {
                                         sharedPrefs.setUserIdToSharedPref(user.getUserId());
                                         sharedPrefs.setUsernameToSharedPref(user.getUsername());
                                         sharedPrefs.setTownToSharedPref(user.getTown());
-                                        sharedPrefs.setProfilePictureFromSharedPref("");
+                                        if(user.getProfilePicture() != null){
+                                            sharedPrefs.setProfilePictureFromSharedPref(user.getProfilePicture());
+                                        }else {
+                                            sharedPrefs.setProfilePictureFromSharedPref("");
+                                        }
                                         Log.d("userdata", user.toString());
                                         progressDialog.dismiss();
                                         finish();
@@ -132,12 +136,24 @@ public class LoginActivity extends AppCompatActivity {
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
+                                }else{
+                                    progressDialog.dismiss();
+                                    Toast.makeText(LoginActivity.this,"Network Error!",Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }, new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 Log.d("VolleyError", error.toString());
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressDialog.dismiss();
+                                        Toast.makeText(LoginActivity.this,"Network Error!",Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
                             }
                         });
                         RequestQueue queue = Volley.newRequestQueue(LoginActivity.this);
@@ -149,16 +165,16 @@ public class LoginActivity extends AppCompatActivity {
                     try {
                         throw task.getException();
                     }  catch (FirebaseAuthInvalidCredentialsException e) {
-                        Toast.makeText(getApplicationContext(), "please enter valid information", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Please enter valid information", Toast.LENGTH_LONG).show();
 
                     }  catch (FirebaseAuthInvalidUserException e) {
-                        Toast.makeText(getApplicationContext(), "User not found", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "User not found!", Toast.LENGTH_LONG).show();
 
                     }catch (FirebaseNetworkException e) {
-                        Toast.makeText(getApplicationContext(), "Network Error", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Network Error!", Toast.LENGTH_LONG).show();
 
                     } catch (Exception e) {
-                        Toast.makeText(getApplicationContext(), "Server Error", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Network Error!", Toast.LENGTH_LONG).show();
                     }
                 }
             }
