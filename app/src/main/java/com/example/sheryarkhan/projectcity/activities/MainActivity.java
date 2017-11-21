@@ -1,5 +1,9 @@
 package com.example.sheryarkhan.projectcity.activities;
 
+import android.content.Context;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.Fragment;
 import android.content.Intent;
@@ -42,17 +46,21 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.iceteck.silicompressorr.SiliCompressor;
 
 
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 import java.util.UUID;
@@ -94,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MainFragment mainFragment;
     private String URL;
+    final List<MainActivity.Media> medias = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,8 +128,6 @@ public class MainActivity extends AppCompatActivity {
         databaseReference = FirebaseDatabase.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
         //setupFirebaseAuth();
-
-
 
 
         //setupBottomNavigationView();
@@ -195,16 +202,18 @@ public class MainActivity extends AppCompatActivity {
         transaction.commit();
 
     }
-    public void loadSettingNotificationFragment(){
+
+    public void loadSettingNotificationFragment() {
 
         SettingNotificationFragment settingNotificationFragment = new SettingNotificationFragment();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.comments_fragment_layout,settingNotificationFragment);
+        transaction.replace(R.id.comments_fragment_layout, settingNotificationFragment);
         transaction.commit();
-      //  transaction.addToBackStack("");
+        //  transaction.addToBackStack("");
 
 
     }
+
     public void pushFragments(String tag, Fragment fragment, boolean shouldAdd, boolean isMainFragment) {
 
     }
@@ -365,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPrefs sharedPrefs = new SharedPrefs(this);
         final String username = sharedPrefs.getUsernameFromSharedPref();
         final String userid = sharedPrefs.getUserIdFromSharedPref();
-        URL = Constants.protocol + Constants.IP + Constants.addNewPost+"/"+userid;
+        URL = Constants.protocol + Constants.IP + Constants.addNewPost + "/" + userid;
 
         final String key = databaseReference.child("posts").push().getKey();
 
@@ -380,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
         //final Iterator iterator = hashMap.values().iterator();
         //Map<Integer, ArrayList<Object>> hMap = Collections.emptyMap();
         //int i = 0;
-        final List<MainActivity.Media> medias = new ArrayList<>();
+
         if (hashMap != null) {
             for (ArrayList<String> item : hashMap.values()) {
 
@@ -408,13 +417,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else if (Integer.parseInt(item.get(0)) == 2) // 2 FOR VIDEO
                 {
-                    try {
-                        byte[] videoByte = convertPathToBytes(String.valueOf(item.get(1)));
-                        MainActivity.Media media = new MainActivity.Media(2, null, videoByte);
-                        medias.add(media);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    //create destination directory
+                    File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + getPackageName() + "/media/videos");
+                    if (f.mkdirs() || f.isDirectory()) {
+                        //compress and output new video specs
+                        new VideoCompressAsyncTask(this).execute(item.get(1), f.getPath());
                     }
+//                    try {
+//                        byte[] videoByte = convertPathToBytes(String.valueOf(item.get(1)));
+//                        MainActivity.Media media = new MainActivity.Media(2, null, videoByte);
+//                        medias.add(media);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
                     Log.d("VIDEOPOST", "VIDEOPOST");
                 }
             }
@@ -434,11 +449,10 @@ public class MainActivity extends AppCompatActivity {
             PostData.put("CommentsCount", 0);
 
 
-
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
-                    Log.d("volleyadd",response.toString());
+                    Log.d("volleyadd", response.toString());
                     //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                 }
             }, new Response.ErrorListener() {
@@ -519,11 +533,11 @@ public class MainActivity extends AppCompatActivity {
 
                     mediaRef.putBytes(medias.get(i).getImageBytes())
                             .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d("storageerror", e.toString());
-                        }
-                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.d("storageerror", e.toString());
+                                }
+                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
@@ -539,7 +553,7 @@ public class MainActivity extends AppCompatActivity {
                                 PostData.put("PostText", editTextShareNews);
                                 PostData.put("timestamp", timestamp.toString());
                                 PostData.put("Town", txtSecondary);
-                                PostData.put("ContentPost",media);
+                                PostData.put("ContentPost", media);
                                 PostData.put("LikesCount", 0);
                                 PostData.put("CommentsCount", 0);
 
@@ -547,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                                     @Override
                                     public void onResponse(JSONObject response) {
-                                        Log.d("volleyadd",response.toString());
+                                        Log.d("volleyadd", response.toString());
                                         //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                                     }
                                 }, new Response.ErrorListener() {
@@ -629,7 +643,7 @@ public class MainActivity extends AppCompatActivity {
                                 PostData.put("PostText", editTextShareNews);
                                 PostData.put("timestamp", timestamp.toString());
                                 PostData.put("Town", txtSecondary);
-                                PostData.put("ContentPost",media);
+                                PostData.put("ContentPost", media);
                                 PostData.put("LikesCount", 0);
                                 PostData.put("CommentsCount", 0);
 
@@ -637,7 +651,7 @@ public class MainActivity extends AppCompatActivity {
                                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
                                     @Override
                                     public void onResponse(JSONObject response) {
-                                        Log.d("volleyadd",response.toString());
+                                        Log.d("volleyadd", response.toString());
                                         //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                                     }
                                 }, new Response.ErrorListener() {
@@ -798,8 +812,70 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ((NewsFeedFragment)fragmentList.get(0)).clearPostsList();
+        ((NewsFeedFragment) fragmentList.get(0)).clearPostsList();
         Log.d("onDestroy", "onDestroy " + counter++);
     }
+
+    class VideoCompressAsyncTask extends AsyncTask<String, String, String> {
+
+        Context mContext;
+
+        public VideoCompressAsyncTask(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+          /*  imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.ic_photo_camera_white_48px));
+            compressionMsg.setVisibility(View.VISIBLE);
+            picDescription.setVisibility(View.GONE);*/
+        }
+
+        @Override
+        protected String doInBackground(String... paths) {
+            String filePath = null;
+            try {
+
+                //File uri = new File(paths[0]);
+                //Uri uri = Uri.parse(paths[0]);
+
+                //Uri baseUri = Uri.parse("content://media/external/video/media");
+                //Uri uri = Uri.withAppendedPath(baseUri, "" + paths[0]);
+                //Log.d("CompressUri",uri.toString());
+                filePath = SiliCompressor.with(mContext).compressVideo(paths[0], paths[1]);
+
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            return filePath;
+
+        }
+
+
+        @Override
+        protected void onPostExecute(String compressedFilePath) {
+            super.onPostExecute(compressedFilePath);
+            File imageFile = new File(compressedFilePath);
+            float length = imageFile.length() / 1024f; // Size in KB
+            String value;
+            if (length >= 1024)
+                value = length / 1024f + " MB";
+            else
+                value = length + " KB";
+            String text = String.format(Locale.US, "%s\nName: %s\nSize: %s", getString(R.string.video_compression_complete), imageFile.getName(), value);
+            Log.d("CompressComplete", text);
+            Log.i("Silicompressor", "Path: " + compressedFilePath);
+
+            try {
+                byte[] videoByte = convertPathToBytes(String.valueOf(imageFile));
+                MainActivity.Media media = new MainActivity.Media(2, null, videoByte);
+                medias.add(media);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 }

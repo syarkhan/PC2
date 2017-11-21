@@ -31,4 +31,5 @@
     <string name="postCommentLike">PostCommentLike</string>
     <string name="postTown">PostTown</string>
     <string name="userIdPost">UserIdPost</string>
+    <string name="video_compression_complete">video_compression_complete</string>
 </resources>

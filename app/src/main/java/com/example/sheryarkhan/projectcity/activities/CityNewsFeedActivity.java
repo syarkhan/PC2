@@ -7,6 +7,7 @@ import com.example.sheryarkhan.projectcity.R;
 
 public class CityNewsFeedActivity extends AppCompatActivity {
 
+
     private static final int ACTIVITY_NUM=1;
 
     @Override

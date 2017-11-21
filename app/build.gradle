@@ -27,8 +27,6 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-
-
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.volley:volley:1.0.0'
     compile 'com.google.code.gson:gson:2.8.2'
@@ -47,11 +45,11 @@ dependencies {
     compile 'com.google.android.gms:play-services-places:11.0.4'
     compile 'com.android.support:support-vector-drawable:25.3.1'
     compile 'com.github.ittianyu:BottomNavigationViewEx:1.2.1'
-    compile('com.facebook.android:audience-network-sdk:4.26.0')
-            {
-                exclude group: 'com.google.android.gms'
-            }
+    compile('com.facebook.android:audience-network-sdk:4.26.0') {
+        exclude group: 'com.google.android.gms'
+    }
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.0.0'
+    compile 'com.iceteck.silicompressorr:silicompressor:2.1'
 }
 apply plugin: 'com.google.gms.google-services'
