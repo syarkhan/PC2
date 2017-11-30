@@ -21,7 +21,6 @@ import java.util.List;
 
 public class SampleActivity extends AppCompatActivity {
     private NativeAd nativeAd;
-
     private LinearLayout  nativeAdContainer;
     private CardView  adView;
     @Override

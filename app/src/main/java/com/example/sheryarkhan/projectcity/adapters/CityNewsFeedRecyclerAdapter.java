@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -18,16 +19,26 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.CommentsActivity;
+import com.example.sheryarkhan.projectcity.activities.MainActivity;
 import com.example.sheryarkhan.projectcity.activities.PostNewsActivity;
 import com.example.sheryarkhan.projectcity.activities.ProfileActivity;
+import com.example.sheryarkhan.projectcity.utils.Constants;
+import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -40,9 +51,15 @@ import com.google.firebase.database.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.util.Collections;
-import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import data.Post;
 import data.PostsPOJO;
 
 /**
@@ -64,25 +81,29 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
     private PostContentViewPagerAdapter postContentViewPagerAdapter;
     private StorageReference storageReference;
     //private FirebaseAuth firebaseAuth;
-    private final FirebaseUser firebaseUser;
+    //private final FirebaseUser firebaseUser;
 
     private static final int TYPE_SHARE_NEWS = 1;
     private static final int TYPE_NEWS_POST = 2;
+    private static final int TYPE_FB_AD = 3;
+    private static final int TYPE_PROGRESS = 4;
 
     private int likes;
     private int noOfComments;
     //private boolean isLiked;
 
-    private List<PostsPOJO> newsFeedItemPOJOs = Collections.emptyList();
+    private List<Object> cityPostsList;
+    private SharedPrefs sharedPrefs;
 
     private DatabaseReference databaseReference;
 
-    public CityNewsFeedRecyclerAdapter(List<PostsPOJO> newsFeedItems) {
-        //this.context = context;
-        this.newsFeedItemPOJOs = newsFeedItems;
+    public CityNewsFeedRecyclerAdapter(List<Object> newsFeedItems, Context context) {
+        this.context = context;
+        this.cityPostsList = newsFeedItems;
         storageReference = FirebaseStorage.getInstance().getReference();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+//        databaseReference = FirebaseDatabase.getInstance().getReference();
+//        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        sharedPrefs = new SharedPrefs(context);
         //firebaseUser = firebaseAuth.getCurrentUser();
 
         //inflater = LayoutInflater.from(context);
@@ -93,7 +114,7 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
     @Override
     public int getItemCount() {
         try {
-            return (newsFeedItemPOJOs.size() + 1); //Plus 1 for the Share news layout at the top
+            return (cityPostsList.size()); //Plus 1 for the Share news layout at the top
         } catch (Exception ex) {
 
         }
@@ -105,7 +126,11 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
 
         if (position == 0) {
             return TYPE_SHARE_NEWS;
-        } else {
+        }
+        else if(cityPostsList.get(position)==null){
+            return TYPE_PROGRESS;
+        }
+        else {
             return TYPE_NEWS_POST;
         }
     }
@@ -115,15 +140,17 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
     public MainViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         context = parent.getContext();
-//        return new OnlyPostImageViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
+//        return new PostViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
 
         switch (viewType) {
             case TYPE_NEWS_POST:
-                return new OnlyPostImageViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
+                return new PostViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
 
             case TYPE_SHARE_NEWS:
                 return new ShareNewsPostViewHolder(LayoutInflater.from(context).inflate(R.layout.share_news_item_layout, parent, false));
 
+            case TYPE_PROGRESS:
+                return new ProgressBarViewHolder(LayoutInflater.from(context).inflate(R.layout.progress_list_item, parent, false));
         }
         return null;
 //        View view = inflater.inflate(R.layout.news_feed_list_item,parent,false);
@@ -147,8 +174,8 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
 
 
 //            notifyDataSetChanged();
-            OnlyPostImageViewHolder mholder = (OnlyPostImageViewHolder) holder;
-            setUpPictureView(context, mholder, holder.getAdapterPosition() - 1);
+            PostViewHolder mholder = (PostViewHolder) holder;
+            setUpPictureView(context, mholder, holder.getAdapterPosition());
         } else if (holder.getItemViewType() == TYPE_SHARE_NEWS) {
 
             final ShareNewsPostViewHolder mholder = (ShareNewsPostViewHolder) holder;
@@ -185,51 +212,37 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
         }
     }
 
-    private void setUpPictureView(final Context context, final OnlyPostImageViewHolder mholder, final int position) {
+    private void setUpPictureView(final Context context, final PostViewHolder mholder, final int position) {
 
-        final PostsPOJO currentData = newsFeedItemPOJOs.get(position);
+        final Post currentData = (Post) cityPostsList.get(position);
 
-        if (currentData.getcontent_post().size() == 0) {
+        if (currentData.getContentPost() == null) {
             mholder.viewPager.setVisibility(View.GONE);
             mholder.tabLayout.setVisibility(View.GONE);
-        } else if (currentData.getcontent_post().size() > 1) {
-            //postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+        } else if (currentData.getContentPost().size() > 1) {
+            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getContentPost());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.viewPager.setVisibility(View.VISIBLE);
             mholder.tabLayout.setVisibility(View.VISIBLE);
             mholder.tabLayout.setupWithViewPager(mholder.viewPager, true);
-        } else if (currentData.getcontent_post().size() == 1) {
-            //postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getcontent_post());
+        } else if (currentData.getContentPost().size() == 1) {
+            postContentViewPagerAdapter = new PostContentViewPagerAdapter(context, currentData.getContentPost());
             mholder.viewPager.setAdapter(postContentViewPagerAdapter);
             mholder.tabLayout.setVisibility(View.GONE);
             mholder.viewPager.setVisibility(View.VISIBLE);
         }
 
-//        final DatabaseReference userDetails = databaseReference.child("Users/"+currentData.getUserID());
-//        userDetails.addListenerForSingleValueEvent(new ValueEventListener() {
-//
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot1) {
-//
-//                String username = dataSnapshot1.child("Username").getValue(String.class);
-//                String profilePicturePath = dataSnapshot1.child("ProfilePicture").getValue(String.class);
+        mholder.txtName.setText(currentData.getUserInfo().getUsername());
 
-        //mholder.txtName.setBackground(null);
-        //mholder.txtName.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
-        //mholder.txtName.setLayoutParams(new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-        mholder.txtName.setText(currentData.getusername());
-
-        if (currentData.getprofilepicture() == null) {
-
-        } else {
-            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getprofilepicture());
+        if (currentData.getUserInfo().getProfilePicture() != null) {
+            StorageReference filePath = storageReference.child("profilepictures").child(currentData.getUserInfo().getProfilePicture());
             filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
                     try {
                         GlideApp.with(context)
                                 .load(uri)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
                                 .circleCrop()
                                 .transition(DrawableTransitionOptions.withCrossFade(1000))
                                 .error(R.color.link)
@@ -239,34 +252,35 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
                     }
                 }
             });
+        } else {
+            try {
+                GlideApp.with(context)
+                        .load(R.drawable.circle_image)
+                        .circleCrop()
+                        .transition(DrawableTransitionOptions.withCrossFade(1000))
+                        .error(R.drawable.circle_image)
+                        .into(mholder.imgProfilePic);
+            } catch (Exception ex) {
+                Log.d("error", ex.toString());
+            }
         }
 
-        likes = currentData.getLikes() == null ? 0 : currentData.getLikes().size();
-        noOfComments = 12;
-        if (currentData.getLikes().containsKey(firebaseUser.getUid())) {
-            mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+        mholder.likesCount = currentData.getLikesCount();
+        mholder.commentsCount = currentData.getCommentsCount();
+
+        if(currentData.getLikes().size() > 0) {
+
+            //mholder.isLiked = currentData.getLikes().contains(sharedPrefs.getUserIdFromSharedPref());
+
+            if (currentData.getLikes().contains(sharedPrefs.getUserIdFromSharedPref())) {
+                mholder.btnHelpful.setTag("like_active");
+                mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+                //mholder.isLiked = true;
+            }
         }
-        //int comments = currentData.getcomments().size() == 0 ? 0 : currentData.getLikes().size();
 
-        mholder.txtLikes.setText(likes + " " + context.getResources().getString(R.string.likes_dot));
-        mholder.txtComments.setText(noOfComments + " Comments");
-        //Toast.makeText(getApplicationContext(),username.toString(),Toast.LENGTH_LONG).show();
-
-
-        //list.add(new PostsPOJO(postsPOJO.getUserID(),profilePicturePath ,username, postsPOJO.getTimestamp(),postsPOJO.getPostText(),postsPOJO.getLocation(),postsPOJO.getcontent_post()));
-        //Log.d("datalist2", postsPOJO.getUserID()+","+profilePicturePath +","+username+","+postsPOJO.getTimestamp()+","+postsPOJO.getPostText()+","+postsPOJO.getLocation()+","+postsPOJO.getcontent_post());
-
-
-//                            userDetails.removeEventListener(mListener);
-//            }
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//            }
-//        });
-
-
-        //mholder.viewPager.setPageTransformer(true, new Zoom);
-        //viewPager.setAdapter(postContentViewPagerAdapter);
+        mholder.txtLikes.setText(mholder.likesCount + " " + context.getResources().getString(R.string.likes_dot));
+        mholder.txtComments.setText(mholder.commentsCount + " " + context.getResources().getString(R.string.comments));
 
         mholder.txtName.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -279,101 +293,152 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
         mholder.btnComments.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                MainActivity mainActivity = (MainActivity) context;
-//                mainActivity.onCommentButtonSelected(likes, noOfComments, context.getString(R.string.main_activity), currentData.getPostid());
-//
-//                mainActivity.hideLayout();
-                //mainActivity.replaceMainFragmentWithComments();
-//                Intent intent = new Intent(context, CommentsActivity.class);
-//                context.startActivity(intent);
+                MainActivity mainActivity = (MainActivity) context;
+                mainActivity.onCommentButtonSelected(currentData.getUserId(), mholder.likesCount, mholder.commentsCount, context.getString(R.string.main_activity), currentData.getPostId());
+                mainActivity.hideLayout();
             }
         });
 
         mholder.btnHelpful.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(context, "liked", Toast.LENGTH_SHORT).show();
 
-                databaseReference.child("posts/" + currentData.getPostid()).runTransaction(new Transaction.Handler() {
+//                WifiManager wifi = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//                if (!wifi.isWifiEnabled()) {
+//                    //wifi is not enabled
+//                    HelperFunctions.getToastShort(context, "No internet connection!");
+//                    return;
+//                }
+
+                Map<String,Map<String, Object>> Data = new HashMap<>();
+
+                Map<String, Object> PostData = new HashMap<>();
+                PostData.put("UserId", sharedPrefs.getUserIdFromSharedPref());
+                PostData.put("PostId", currentData.getPostId());
+                PostData.put("PostText", currentData.getPostText());
+                PostData.put("timestamp", currentData.getTimestamp());
+
+                Map<String, Object> NotificationData = new HashMap<>();
+                NotificationData.put("ByUserId", sharedPrefs.getUserIdFromSharedPref());
+                NotificationData.put("ToUserId", currentData.getUserId());
+                NotificationData.put("PostId", currentData.getPostId());
+                NotificationData.put("NotificationType", "post_like");
+                NotificationData.put("Read", false);
+                NotificationData.put("timestamp", currentData.getTimestamp());
+                //PostCommentData.put("CommentId", timestamp.toString());
+
+
+                Data.put("PostData",PostData);
+                Data.put("NotificationData",NotificationData);
+
+                view.startAnimation(AnimationUtils.loadAnimation(context, R.anim.image_resize));
+                if (mholder.btnHelpful.getTag().equals("like")) {
+                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+                    mholder.btnHelpful.setTag("like_active");
+                } else if (mholder.btnHelpful.getTag().equals("like_active")) {
+                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+                    mholder.btnHelpful.setTag("like");
+                }
+
+                final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+                        Constants.addOrRemoveUserLikeToPost + "/" + sharedPrefs.getUserIdFromSharedPref() + "&" + currentData.getPostId();
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, new JSONObject(Data), new Response.Listener<JSONObject>() {
                     @Override
-                    public Transaction.Result doTransaction(MutableData mutableData) {
-                        PostsPOJO postsPOJO = mutableData.getValue(PostsPOJO.class);
+                    public void onResponse(JSONObject response) {
+                        Log.d("volleyadd", response.toString());
 
-                        if (postsPOJO == null) {
-                            return Transaction.success(mutableData);
+                        Boolean isSuccess = false;
+                        try {
+                            isSuccess = response.getBoolean("success");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                        Log.d("dadalike", postsPOJO.toString());
-                        Log.d("dadalike", mutableData.toString());
-                        if (postsPOJO.getLikes() != null) {
-
-                            if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
-                                // Unstar the post and remove self from stars
-                                postsPOJO.likesCount = postsPOJO.likesCount - 1;
-                                postsPOJO.getLikes().remove(firebaseUser.getUid());
-                                //isLiked = false;
-                                //mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-                                likes = likes + 1;
-                            } else {
-                                // Star the post and add self to stars
-                                postsPOJO.likesCount = postsPOJO.likesCount + 1;
-                                postsPOJO.getLikes().put(firebaseUser.getUid(), true);
-                                //isLiked = true;
-                                //mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-                            }
+                        if (!isSuccess) {
+                            //change icon like-active to like
+                            ((MainActivity) context).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+                                }
+                            });
+                            Toast.makeText(context, "Did not succeed", Toast.LENGTH_SHORT).show();
                         } else {
+                            //notifyItemChanged(position);
+                            //change icon like to like-active
+                            try {
+                                int state = response.getInt("state");
+                                // state 1 for ADDITION OF USER TO LIKES
+                                // state 2 for REMOVAL OF USER FROM LIKES
 
-                            postsPOJO.getLikes().put(firebaseUser.getUid(), true);
-                            postsPOJO.likesCount = postsPOJO.likesCount + 1;
-                            //isLiked = true;
+                                if (state == 1) {
+
+                                    mholder.likesCount=mholder.likesCount+1;
+                                    ((Post)cityPostsList.get(position)).setLikesCount(mholder.likesCount);
+                                    ((Post)cityPostsList.get(position)).addUserToLikesList(sharedPrefs.getUserIdFromSharedPref());
+                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+                                            context.getResources().getString(R.string.likes_dot));
+                                    notifyItemChanged(position);
+
+                                    //change icon like to like-active
+//                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+//                                        }
+//                                    });
+                                } else if(state == 2) {
+
+                                    mholder.likesCount=mholder.likesCount-1;
+                                    ((Post)cityPostsList.get(position)).setLikesCount(mholder.likesCount);
+                                    ((Post)cityPostsList.get(position)).removeUserFromLikesList(sharedPrefs.getUserIdFromSharedPref());
+                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+                                            context.getResources().getString(R.string.likes_dot));
+                                    notifyItemChanged(position);
+                                    //change icon like-active to like
+//                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+//                                        }
+//                                    });
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
                         }
-                        // Set value and report transaction success
-                        mutableData.setValue(postsPOJO);
-                        return Transaction.success(mutableData);
+                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                     }
-
+                }, new Response.ErrorListener() {
                     @Override
-                    public void onComplete(DatabaseError databaseError, boolean commited,
-                                           DataSnapshot dataSnapshot) {
-
-                        PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
-                        if (commited) {
-                            //transaction successfully completed
-                            if (postsPOJO.getLikes().containsKey(firebaseUser.getUid())) {
-                                mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-                            } else {
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("VolleyError", error.toString());
+                        ((MainActivity) context).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
                                 mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
                             }
-                        } else {
-                            //aborted or an error occurred
-                            mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-                        }
-
-                        // Transaction completed
-                        Log.d("transaction completed", "postTransaction:onComplete:" + databaseError);
+                        });
                     }
                 });
 
-//                if(isLiked) {
-//                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-//                }else{
-//                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
-//                }
-                view.startAnimation(AnimationUtils.loadAnimation(context, R.anim.image_resize));
+                RequestQueue queue = Volley.newRequestQueue(context);
+                queue.add(jsonObjectRequest);
 
             }
         });
 
         // Converting timestamp into X ago format
         CharSequence timeAgo = DateUtils.getRelativeTimeSpanString(
-                Long.parseLong(String.valueOf(currentData.gettimestamp())),
+                Long.parseLong(String.valueOf(currentData.getTimestamp())),
                 System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
 
         mholder.txtTimeStamp.setText(timeAgo);
-        mholder.txtLocation.setText(currentData.getlocation());
+        mholder.txtLocation.setText(currentData.getLocation());
 
-        mholder.txtSecondary.setText(currentData.getsecondarylocation());
+        mholder.txtSecondary.setText(currentData.getTown());
 
-        mholder.txtStatusMsg.setText(currentData.getposttext());
+        mholder.txtStatusMsg.setText(currentData.getPostText());
 
 
         mholder.imgProfilePic.setOnClickListener(new View.OnClickListener() {
@@ -383,31 +448,28 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
                 context.startActivity(intent);
             }
         });
-
-
-        //mholder.imgPost.setImageDrawable(currentData.getImage());
-
-//        mholder.txtUrl.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Toast.makeText(context,"URL:"+position,Toast.LENGTH_SHORT).show();
-//            }
-//        });
-
-
-//        mholder.imgPost.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//                Intent intent = new Intent(context, PostImageDisplayActivity.class);
-//                intent.putExtra("imageIndex", position);
-//                context.startActivity(intent);
-//
-//            }
-//        });
-
     }
 
+
+    public void showLoading() {
+        if (cityPostsList != null) {
+            //isMoreLoading = false;
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    cityPostsList.add(null);
+                    notifyItemInserted(cityPostsList.size() - 1);
+                    //onLoadMoreListener.onLoadMore1();
+                }
+            });
+        }
+    }
+    public void dismissLoading() {
+        if (cityPostsList != null && cityPostsList.size() > 0) {
+            cityPostsList.remove(cityPostsList.size() - 1);
+            notifyItemRemoved(cityPostsList.size());
+        }
+    }
 
     public class ShareNewsPostViewHolder extends MainViewHolder {
 
@@ -433,7 +495,20 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
     }
 
 
-    public class OnlyPostImageViewHolder extends MainViewHolder {
+    private class ProgressBarViewHolder extends CityNewsFeedRecyclerAdapter.MainViewHolder {
+
+        ProgressBar progressBar;
+
+        private ProgressBarViewHolder(View itemView) {
+            super(itemView);
+
+            progressBar = (ProgressBar) itemView.findViewById(R.id.progressBar);
+        }
+
+    }
+
+
+    private class PostViewHolder extends MainViewHolder {
 
         int Id;
         TextView txtName;
@@ -445,8 +520,11 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
         ImageButton btnComments;
         ViewPager viewPager;
         TabLayout tabLayout;
+        int likesCount;
+        int commentsCount;
+        boolean isLiked;
 
-        public OnlyPostImageViewHolder(View itemView) {
+        private PostViewHolder(View itemView) {
 
             super(itemView);
 
@@ -478,8 +556,6 @@ public class CityNewsFeedRecyclerAdapter extends RecyclerView.Adapter<CityNewsFe
             txtLocation.setTypeface(ROBOTO_FONT_LIGHT);
 
         }
-
-
     }
 
 

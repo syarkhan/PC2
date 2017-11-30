@@ -1,13 +1,16 @@
 package com.example.sheryarkhan.projectcity.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,9 +48,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,19 +62,22 @@ import java.util.Map;
 
 import data.Post;
 import data.PostsPOJO;
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 
-public class NewsFeedFragment extends Fragment {
+public class NewsFeedFragment extends Fragment{
     private static final int TOTAL_ITEM_EACH_LOAD = 10;
     private int currentPage = 0;
 
     private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView newsFeedRecyclerView;
-    private NewsFeedRecyclerAdapter newsFeedRecyclerAdapter;
+    public RecyclerView newsFeedRecyclerView;
+    public NewsFeedRecyclerAdapter newsFeedRecyclerAdapter;
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private ChildEventListener mChildListener;
-    private ProgressBar recyclerViewProgressBar;
+    //private ProgressBar recyclerViewProgressBar;
     private TextView txtNetworkError;
 
     //POST UPLOAD RELATED
@@ -87,7 +95,7 @@ public class NewsFeedFragment extends Fragment {
     private LinearLayoutManager linearLayoutManager;
 
     private static final int ACTIVITY_NUM = 0;
-    private ArrayList<PostsPOJO> list;
+    //private ArrayList<PostsPOJO> list;
     private String oldestPostId;
 
     boolean isFirstTime = true;
@@ -97,11 +105,15 @@ public class NewsFeedFragment extends Fragment {
     Query query;
     View view;
     private boolean mIsLoading = false;
+    volatile boolean activityStopped = false;
+    private Context context;
 
 
-    private List<Post> postList;
+    public List<Object> postList;
 
     private NativeAdsManager mAds;
+
+    private Socket mSocket;
 
     public NewsFeedFragment() {
         // Required empty public constructor
@@ -111,11 +123,31 @@ public class NewsFeedFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         page_num = 0;
-        sharedPrefs = new SharedPrefs(getActivity());
+        context = getActivity();
+        sharedPrefs = new SharedPrefs(context);
         town = sharedPrefs.getTownFromSharedPref();
         URL = changePageNumberURL(page_num);
         String iid = FirebaseInstanceId.getInstance().getToken();
 
+        try {
+            IO.Options mOptions = new IO.Options();
+            mOptions.query = "town=" + sharedPrefs.getTownFromSharedPref();
+
+            Log.d("town",sharedPrefs.getTownFromSharedPref());
+            mSocket = IO.socket(Constants.protocol+ Constants.IP, mOptions);
+            //mSocket = IO.socket("/"+sharedPrefs.getTownFromSharedPref());
+            Log.d("socketconn",mSocket.toString());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+
+
+        mSocket.on(Socket.EVENT_CONNECT, onConnect);
+        mSocket.on(Socket.EVENT_DISCONNECT, onDisconnect);
+        mSocket.on("onNewPost", onNewPost);
+
+        mSocket.connect();
 
     }
 
@@ -137,7 +169,7 @@ public class NewsFeedFragment extends Fragment {
 
         view = inflater.inflate(R.layout.fragment_news_feed, container, false);
 
-        list = new ArrayList<>();
+        //list = new ArrayList<>();
         postList = new ArrayList<>();
 
         newsFeedRecyclerView = (RecyclerView) view.findViewById(R.id.news_feed_recyclerview);
@@ -146,11 +178,16 @@ public class NewsFeedFragment extends Fragment {
         newsFeedRecyclerView.setItemViewCacheSize(20);
         newsFeedRecyclerView.setDrawingCacheEnabled(true);
         newsFeedRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager = new LinearLayoutManager(context);
         newsFeedRecyclerView.setLayoutManager(linearLayoutManager);
         //loadAds();
-        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList, getActivity(),mAds);
+        newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList, context,mAds);
         newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
+        ((SimpleItemAnimator) newsFeedRecyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+
+        postList.add("ShareNews");
+        newsFeedRecyclerAdapter.notifyItemChanged(0);
+        Log.d("postsobject",postList.toString());
 
 
 
@@ -165,25 +202,12 @@ public class NewsFeedFragment extends Fragment {
 //        newsFeedRecyclerAdapter.notifyItemChanged(0);
 
 
-        recyclerViewProgressBar = (ProgressBar) view.findViewById(R.id.recyclerViewProgressBar);
+        //recyclerViewProgressBar = (ProgressBar) view.findViewById(R.id.recyclerViewProgressBar);
         txtNetworkError = (TextView) view.findViewById(R.id.txtNetworkError);
 
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-        firebaseAuth = FirebaseAuth.getInstance();
-        final Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-
-
-        //setUpVolley();
-        //
-//        Query user = databaseReference.orderByChild("")
-//        for(int i=0;i<locations.length;i++)
-//        {
-//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Location").setValue(locations[i]);
-//            databaseReference.child("Post").child(String.valueOf(i+3)).child("PostText").setValue("Lorem ipsum dolor sit amet");
-//            databaseReference.child("Post").child(String.valueOf(i+3)).child("Timestamp").setValue(1502179255);
-//            databaseReference.child("Post").child(String.valueOf(i+3)).child("UserID").setValue(3);
-//        }
-
+        //databaseReference = FirebaseDatabase.getInstance().getReference();
+        //firebaseAuth = FirebaseAuth.getInstance();
+        final Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipeRefreshLayout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -193,16 +217,27 @@ public class NewsFeedFragment extends Fragment {
                 if (vibrator.hasVibrator()) {
                     vibrator.vibrate(30);
                 }
+                postList.subList(1,postList.size()).clear();
+                newsFeedRecyclerAdapter.notifyDataSetChanged();
                 //recyclerViewProgressBar.setVisibility(View.GONE);
                 //txtNetworkError.setVisibility(View.GONE);
                 //newsFeedRecyclerView.setVisibility(View.VISIBLE);
-                Toast.makeText(getActivity(), "Refreshed", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
 
-                postList.clear();
-                newsFeedRecyclerAdapter.notifyDataSetChanged();
-                page_num = 0;
-                loadMoreData();
-                swipeRefreshLayout.setRefreshing(false);
+                        swipeRefreshLayout.setRefreshing(false);
+                        page_num = 0;
+                        loadMoreData();
+
+                    }
+                },2000);
+
+                //postList.clear();
+                //newsFeedRecyclerAdapter.notifyDataSetChanged();
+
+                //loadMoreData();
+                //swipeRefreshLayout.setRefreshing(false);
             }
         });
 
@@ -286,69 +321,71 @@ public class NewsFeedFragment extends Fragment {
         newsFeedRecyclerView.addOnScrollListener(new EndlessRecyclerOnScrollListener(linearLayoutManager) {
             @Override
             public void onLoadMore(int current_page) {
+                Log.d("scrolled1","scrolled1");
                 if (!mIsLoading) {
                     loadMoreData();
                 }
-
             }
         });
+
         //
-
         //final boolean mIsLoading = false;
-
-
-        mChildListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                //if (!isFirstTime) {
-                final PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
-
-                //images = postsPOJO.getcontent_post();
-
-                list.add(0, new PostsPOJO(currentPage, postsPOJO.getCommentsCount(), postsPOJO.getuserid(), dataSnapshot.getKey(),
-                        postsPOJO.getprofilepicture(), postsPOJO.getusername(),
-                        postsPOJO.gettimestamp(), postsPOJO.getposttext(),
-                        postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
-                        , postsPOJO.getcontent_post(), postsPOJO.getLikes()));
-
-                newsFeedRecyclerAdapter.notifyItemInserted(1);
-                newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
-                //}
-
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        };
+//        mChildListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+//                //if (!isFirstTime) {
+//                final PostsPOJO postsPOJO = dataSnapshot.getValue(PostsPOJO.class);
+//
+//                //images = postsPOJO.getcontent_post();
+//
+//                list.add(0, new PostsPOJO(currentPage, postsPOJO.getCommentsCount(), postsPOJO.getuserid(), dataSnapshot.getKey(),
+//                        postsPOJO.getprofilepicture(), postsPOJO.getusername(),
+//                        postsPOJO.gettimestamp(), postsPOJO.getposttext(),
+//                        postsPOJO.getlocation(), postsPOJO.getsecondarylocation()
+//                        , postsPOJO.getcontent_post(), postsPOJO.getLikes()));
+//
+//                newsFeedRecyclerAdapter.notifyItemInserted(1);
+//                newsFeedRecyclerAdapter.notifyItemRangeChanged(1, list.size());
+//                //}
+//
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+//
+//            }
+//
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//
+//
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        };
 
         return view;
     }
 
+
     private void loadAds() {
         AdSettings.addTestDevice("d799c50e3b4c9e58d4412f125770179b");
         String placement_id = "2051713708390959_2051806708381659";
-        mAds = new NativeAdsManager(getActivity(), placement_id, 5);
+        mAds = new NativeAdsManager(context, placement_id, 1);
         mAds.loadAds();
-        NativeAd ad = mAds.nextNativeAd();
-        //ad.getAdBody();
+        if(mAds.isLoaded()) {
+            NativeAd ad = mAds.nextNativeAd();
+            ad.getAdBody();
+        }
+
 
         int i=0;
         int a=1;
@@ -376,62 +413,58 @@ public class NewsFeedFragment extends Fragment {
         return Constants.protocol + Constants.IP + Constants.getTownPosts+"/10&" + page_num + "&" + townParam;
     }
 
-    private void setUpVolley() {
-        mResultCallback = new IVolleyResult() {
-            @Override
-            public void notifySuccess(int requestType, JSONObject response) {
-                Log.d("volleydadasuccess", "Volley requester " + String.valueOf(requestType));
-                Log.d("volleydadasuccess", "Volley JSON GET" + response);
-                GsonBuilder gsonBuilder = new GsonBuilder();
-                Gson gson = gsonBuilder.create();
-
-            }
-
-            @Override
-            public void notifyError(int requestType, VolleyError error) {
-                Log.d("volleydadaerror", "Volley requester " + String.valueOf(requestType));
-                Log.d("volleydadaerror", "Volley JSON GET" + "That didn't work! " + error.toString());
-            }
-        };
-
-
-    }
-
     private void loadMoreData() {
 
 
+        mIsLoading = true;
+        if(mIsLoading){
+            newsFeedRecyclerAdapter.showLoading();
+            Log.d("postsobject",postList.toString());
+        }
         URL = changePageNumberURL(page_num);
         Log.d("URL",URL);
         page_num++;
         //currentPage++;
 
         loadData();
+
+        //loadData1();
     }
 
     private void loadData() {
-        mIsLoading = true;
+
         StringRequest stringRequest = new StringRequest(URL, new Response.Listener<String>() {
 
             @Override
             public void onResponse(String response) {
                 mIsLoading = false;
-                recyclerViewProgressBar.setVisibility(View.GONE);
+                Log.d("postsobject",response);
+
+                ((Activity)context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        newsFeedRecyclerAdapter.dismissLoading();
+                        //recyclerViewProgressBar.setVisibility(View.GONE);
+                    }
+                });
+
                 if (response.equals("false")) {
                     //HelperFunctions.getToastShort(getActivity(),"No more data!");
-                    Toast.makeText(getActivity(), "No more data!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No more data!", Toast.LENGTH_SHORT).show();
 
                 } else {
 
                     GsonBuilder gsonBuilder = new GsonBuilder();
                     Gson gson = gsonBuilder.create();
                     //JSONArray jsonArray = gson.fromJson(response,JSONArray.class);
-                    int lastListSize = postList.size();
+                    //int lastListSize = postList.size();
 
                     List<Post> list = gson.fromJson(response, new TypeToken<List<Post>>() {
                     }.getType());
                     //postList.addAll(list);
                     //Log.d("volleyposts", postList.toString());
 
+                    //List<Object> posts = new ArrayList<>();
                     for (int i = 0; i < list.size(); i++) {
                         final Post item = list.get(i);
 //                        try {
@@ -440,16 +473,17 @@ public class NewsFeedFragment extends Fragment {
 //                        } catch (JSONException e) {
 //                            e.printStackTrace();
 //                        }
-                        getActivity().runOnUiThread(new Runnable() {
+                        postList.add(item);
+                        ((Activity)context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                postList.add(item);
                                 newsFeedRecyclerAdapter.notifyItemInserted(postList.size());
                             }
                         });
 
                         Log.d("volleyposts", postList.toString());
                     }
+                    //newsFeedRecyclerAdapter.addItemMore(posts);
 //                newsFeedRecyclerAdapter = new NewsFeedRecyclerAdapter(postList);
 //                newsFeedRecyclerView.setAdapter(newsFeedRecyclerAdapter);
                     //newsFeedRecyclerAdapter.notifyItemChanged(0);
@@ -470,16 +504,17 @@ public class NewsFeedFragment extends Fragment {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("VolleyError", error.toString());
-                getActivity().runOnUiThread(new Runnable() {
+                ((Activity)context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        recyclerViewProgressBar.setVisibility(View.GONE);
+                        //recyclerViewProgressBar.setVisibility(View.GONE);
+                        newsFeedRecyclerAdapter.dismissLoading();
                     }
                 });
             }
         });
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        RequestQueue queue = Volley.newRequestQueue(context);
 
         stringRequest.setRetryPolicy(new DefaultRetryPolicy(10000,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
@@ -515,10 +550,31 @@ public class NewsFeedFragment extends Fragment {
     }
 
 
+    private void setUpVolley() {
+        mResultCallback = new IVolleyResult() {
+            @Override
+            public void notifySuccess(int requestType, JSONObject response) {
+                Log.d("volleydadasuccess", "Volley requester " + String.valueOf(requestType));
+                Log.d("volleydadasuccess", "Volley JSON GET" + response);
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                Gson gson = gsonBuilder.create();
+
+            }
+
+            @Override
+            public void notifyError(int requestType, VolleyError error) {
+                Log.d("volleydadaerror", "Volley requester " + String.valueOf(requestType));
+                Log.d("volleydadaerror", "Volley JSON GET" + "That didn't work! " + error.toString());
+            }
+        };
+
+
+    }
+
     @Override
     public void onPause() {
         super.onPause();
-
+        //mSocket.disconnect();
         if (getActivity().getSupportFragmentManager().findFragmentByTag("tab_town_news") != null) {
             getActivity().getSupportFragmentManager().findFragmentByTag("tab_town_news").setRetainInstance(true);
             Log.d("onPause123", "Instance found");
@@ -538,4 +594,53 @@ public class NewsFeedFragment extends Fragment {
             Log.d("onResume123", "no Instance found");
         }
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mSocket.disconnect();
+        mSocket.off(Socket.EVENT_CONNECT, onConnect);
+        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
+        mSocket.off("onNewPost",onNewPost);
+    }
+
+    private Emitter.Listener onConnect = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            Log.d("connected","socket");
+        }
+    };
+
+    private Emitter.Listener onDisconnect = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            Log.d("disconnected","socket");
+        }
+    };
+
+    private Emitter.Listener onNewPost = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            final JSONObject data = (JSONObject) args[0];
+            Log.d("socketdata",data.toString());
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            Gson gson = gsonBuilder.create();
+
+                final Post currentData = gson.fromJson(String.valueOf(data), Post.class);
+                ((Activity)context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(context,currentData.getLocation(),Toast.LENGTH_SHORT).show();
+                        postList.add(1,currentData);
+                        newsFeedRecyclerAdapter.notifyItemInserted(1);
+                        newsFeedRecyclerAdapter.notifyItemRangeChanged(1, postList.size());
+                    }
+                });
+
+
+        }
+    };
+
+
+
 }

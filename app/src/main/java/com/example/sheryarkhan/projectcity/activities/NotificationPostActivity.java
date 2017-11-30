@@ -111,8 +111,13 @@ public class NotificationPostActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String postId = intent.getStringExtra("postId");
         String userId = intent.getStringExtra("userId");
+        String commentId = intent.getStringExtra("commentId");
+        String notificationType = intent.getStringExtra("notificationType");
+        String NotificationId = intent.getStringExtra("NotificationId");
 
-        String URL = Constants.protocol + Constants.IP + Constants.getPost+"/"+postId +"&"+userId;
+
+        String URL = Constants.protocol + Constants.IP + Constants.getPost+"/"+postId +"&"+commentId
+                +"&"+ userId +"&"+ notificationType +"&"+NotificationId;
         Log.d("url",URL);
         //Get userid, username and town from Mongodb database
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {

@@ -66,6 +66,9 @@ public class LoginActivity extends AppCompatActivity {
         //if(firebaseAuth.getCurrentUser() != null){
         if(!sharedPrefs.getUserIdFromSharedPref().equals("")) {
             FirebaseMessaging.getInstance().subscribeToTopic("user_"+sharedPrefs.getUserIdFromSharedPref());
+
+            //TODO: SUBSCRIBE TOWN ALSO TO FCM
+            //FirebaseMessaging.getInstance().subscribeToTopic("user_"+sharedPrefs.getUserIdFromSharedPref());
             Intent intent = new Intent(getApplicationContext(),MainActivity.class);
             startActivity(intent);
             finish();
@@ -119,6 +122,8 @@ public class LoginActivity extends AppCompatActivity {
 
                                 if(isSuccess){
                                     try {
+
+                                        //TODO: SUBSCIBE USER AND TOWN WHEN LOGIN
                                         User user = gson.fromJson(String.valueOf(response.getJSONObject("User")), User.class);
                                         sharedPrefs.setUserIdToSharedPref(user.getUserId());
                                         sharedPrefs.setUsernameToSharedPref(user.getUsername());
@@ -128,6 +133,9 @@ public class LoginActivity extends AppCompatActivity {
                                         }else {
                                             sharedPrefs.setProfilePictureFromSharedPref("");
                                         }
+
+                                        FirebaseMessaging.getInstance().subscribeToTopic("user_"+sharedPrefs.getUserIdFromSharedPref());
+                                        //FirebaseMessaging.getInstance().subscribeToTopic("user_"+sharedPrefs.getUserIdFromSharedPref());
                                         Log.d("userdata", user.toString());
                                         progressDialog.dismiss();
                                         finish();

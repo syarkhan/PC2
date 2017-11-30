@@ -17,8 +17,10 @@ public final class Constants {
 
     public static final String MY_PREFS_NAME = "UserData";
 
+    public static final String TOWN_POST = "town_post";
+
     //public static String IP = "project-city.herokuapp.com";
-    public static String IP = "192.168.8.104:3000";
+    public static String IP = "192.168.8.101:3000";
     //public static String IP = "10.0.0.2:3000";
     public static String protocol = "http://";
     public static String addNewPost = "/addNewPost";
@@ -26,11 +28,16 @@ public final class Constants {
     public static String getUserDetails = "/getUserDetails";
     public static String updateUserDetails = "/updateUserDetails";
     public static String addOrRemoveUserLikeToPost = "/addOrRemoveUserLikeToPost";
+
+    public static String addUserToPostLikes = "/addUserToPostLikes";
+    public static String removeUserFromPostLikes = "/removeUserFromPostLikes";
+
     public static String addNewPostComment = "/addNewPostComment";
     public static String getPostComments = "/getPostComments";
     public static String getNotifications = "/getNotifications";
     public static String getTownPosts = "/getTownPosts";
     public static String getPost = "/getPost";
+    public static String getCityPosts = "/getCityPosts";
 
     public static final String sendTownPostNotification = "/sendTownPostNotification";
     public static final String sendPostLikeNotification = "/sendPostLikeNotification";

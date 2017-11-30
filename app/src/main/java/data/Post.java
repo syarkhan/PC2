@@ -38,7 +38,7 @@ public class Post {
 
     @SerializedName("Likes")
     @Expose
-    private List<String> likes = null;
+    private List<String> likes = new ArrayList<>();
 
     @SerializedName("CommentsCount")
     @Expose
@@ -48,7 +48,17 @@ public class Post {
     @Expose
     private UserInfo userInfo;
 
+    public Comment getCommentInfo() {
+        return commentInfo;
+    }
 
+    public void setCommentInfo(Comment commentInfo) {
+        this.commentInfo = commentInfo;
+    }
+
+    @SerializedName("CommentInfo")
+    @Expose
+    private Comment commentInfo;
 
     public UserInfo getUserInfo() {
         return userInfo;
@@ -72,6 +82,14 @@ public class Post {
 
     public void setLikes(List<String> likes) {
         this.likes = likes;
+    }
+
+    public void removeUserFromLikesList(String userid){
+        this.likes.remove(userid);
+    }
+
+    public void addUserToLikesList(String userid){
+        this.likes.add(userid);
     }
 
     public int getCommentsCount() {
@@ -155,3 +173,5 @@ public class Post {
 
 
 }
+
+

@@ -22,7 +22,7 @@ public class SettingsFragment extends Fragment {
 
 
 
-
+private Context context;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -31,7 +31,7 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        context = getActivity();
 
 
     }
@@ -62,9 +62,9 @@ public class SettingsFragment extends Fragment {
         settingsRecyclerView.setDrawingCacheEnabled(true);
         settingsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
-        linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager = new LinearLayoutManager(context);
         settingsRecyclerView.setLayoutManager(linearLayoutManager);
-        settingsRecyclerAdapter = new SettingsRecyclerAdapter(settingsList,getActivity());
+        settingsRecyclerAdapter = new SettingsRecyclerAdapter(settingsList,context);
         settingsRecyclerView.setAdapter(settingsRecyclerAdapter);
 
         return view;

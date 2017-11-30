@@ -1,5 +1,7 @@
 package com.example.sheryarkhan.projectcity.activities;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -76,6 +78,7 @@ public class CommentsFragment extends Fragment {
     private String URL;
     private int page_num;
     private boolean mIsLoading = false;
+    private Context context;
 
 
     public CommentsFragment() {
@@ -87,10 +90,11 @@ public class CommentsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         page_num=0;
+        context = getActivity();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
-        sharedPrefs = new SharedPrefs(getActivity());
+        sharedPrefs = new SharedPrefs(context);
 
         commentsList = new ArrayList<>();
 
@@ -99,7 +103,7 @@ public class CommentsFragment extends Fragment {
         userIdOfPost = getUserIdOfPostFromBundle();
 
         URL = changePageNumberURL(page_num);
-        query = databaseReference.child("postcomments").child(postId).child("comments");
+        //query = databaseReference.child("postcomments").child(postId).child("comments");
 
     }
 
@@ -114,7 +118,7 @@ public class CommentsFragment extends Fragment {
         commentsRecyclerView.setItemViewCacheSize(20);
         commentsRecyclerView.setDrawingCacheEnabled(true);
         commentsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager = new LinearLayoutManager(context);
         commentsRecyclerView.setLayoutManager(linearLayoutManager);
         commentsListAdapter = new CommentsListAdapter(commentsList);
         commentsRecyclerView.setAdapter(commentsListAdapter);
@@ -125,7 +129,6 @@ public class CommentsFragment extends Fragment {
                 if(!mIsLoading) {
                     loadMoreData();
                 }
-
             }
         });
 
@@ -152,11 +155,11 @@ public class CommentsFragment extends Fragment {
             public void onClick(View view) {
                 //Send message to firebase
 
-                Toast.makeText(getActivity(), "Posting Comment", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Posting Comment", Toast.LENGTH_SHORT).show();
                 final String userid = sharedPrefs.getUserIdFromSharedPref();
                 final String username = sharedPrefs.getUsernameFromSharedPref();
                 final String profilepic = sharedPrefs.getProfilePictureFromSharedPref();
-                final String addNewCommentURL= Constants.protocol + Constants.IP +
+                final String addNewCommentURL = Constants.protocol + Constants.IP +
                         Constants.addNewPostComment;
 
                 final String commentText = editTextComment.getText().toString();
@@ -176,8 +179,8 @@ public class CommentsFragment extends Fragment {
 
 
                 //Comment comment = new Comment(postId, commentText, timestamp.toString(), userid, 0,null);
-                GsonBuilder gsonBuilder = new GsonBuilder();
-                Gson gson = gsonBuilder.create();
+                //GsonBuilder gsonBuilder = new GsonBuilder();
+                //Gson gson = gsonBuilder.create();
                 //String jsonObject = gson.toJson(comment);
 
                 Map<String,Map<String, Object>> Data = new HashMap<>();
@@ -186,7 +189,7 @@ public class CommentsFragment extends Fragment {
                 PostCommentData.put("UserId", userid);
                 PostCommentData.put("PostId", postId);
                 PostCommentData.put("CommentText", commentText);
-                PostCommentData.put("timestamp", timestamp.toString());
+                PostCommentData.put("timestamp", timestamp);
                 PostCommentData.put("LikesCount", 0);
 
                 Map<String, Object> NotificationData = new HashMap<>();
@@ -195,7 +198,7 @@ public class CommentsFragment extends Fragment {
                 NotificationData.put("PostId", postId);
                 NotificationData.put("NotificationType", "post_comment");
                 NotificationData.put("Read", false);
-                NotificationData.put("timestamp", timestamp.toString());
+                NotificationData.put("timestamp", timestamp);
                 //PostCommentData.put("CommentId", timestamp.toString());
 
 
@@ -206,7 +209,7 @@ public class CommentsFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d("volleyadd", response.toString());
-                        Toast.makeText(getActivity(), "Posting Done", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Posting Done", Toast.LENGTH_SHORT).show();
                         //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
                     }
                 }, new Response.ErrorListener() {
@@ -217,7 +220,7 @@ public class CommentsFragment extends Fragment {
                 });
 
 
-                RequestQueue queue = Volley.newRequestQueue(getActivity());
+                RequestQueue queue = Volley.newRequestQueue(context);
                 queue.add(jsonObjectRequest);
 
 
@@ -324,7 +327,7 @@ public class CommentsFragment extends Fragment {
                 //recyclerViewProgressBar.setVisibility(View.GONE);
                 if (response.equals("false")) {
                     //HelperFunctions.getToastShort(getActivity(),"No more data!");
-                    Toast.makeText(getActivity(), "No more data!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No more data!", Toast.LENGTH_SHORT).show();
                 } else {
 
                     GsonBuilder gsonBuilder = new GsonBuilder();
@@ -360,7 +363,7 @@ public class CommentsFragment extends Fragment {
             }
         });
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        RequestQueue queue = Volley.newRequestQueue(context);
         queue.add(stringRequest);
         stringRequest.setRetryPolicy(new RetryPolicy() {
             @Override

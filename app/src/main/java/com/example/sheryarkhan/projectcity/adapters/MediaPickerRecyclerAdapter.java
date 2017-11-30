@@ -35,7 +35,7 @@ import java.util.HashMap;
  * Created by Sheryar Khan on 9/20/2017.
  */
 
-public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPickerRecyclerAdapter.MediaPickerHolder>{
+public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPickerRecyclerAdapter.MediaPickerHolder> {
 
     private Context context;
     private ArrayList<ArrayList<String>> data;
@@ -43,7 +43,8 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
     //boolean[] thumbnailsSection; asd
 
 
-    private HashMap<Integer, ArrayList<String>> hashMap = new HashMap<Integer, ArrayList<String>>() {};
+    private HashMap<Integer, ArrayList<String>> hashMap = new HashMap<Integer, ArrayList<String>>() {
+    };
 
 
     public MediaPickerRecyclerAdapter(ArrayList<ArrayList<String>> data) {
@@ -89,17 +90,29 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
         } else if (Integer.parseInt(data.get(holder.getAdapterPosition()).get(0)) == 2) { //FOR VIDEO = 2
 
 
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(data.get(holder.getAdapterPosition()).get(1));
-            String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            long timeInmillisec = Long.parseLong(time);
-            long duration = timeInmillisec / 1000;
-            long hours = duration / 3600;
-            long minutes = (duration - hours * 3600) / 60;
-            long seconds = duration - (hours * 3600 + minutes * 60);
+            long minutes = 0;
+            long seconds = 0;
+            try {
+                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                retriever.setDataSource(data.get(holder.getAdapterPosition()).get(1));
+                String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                long timeInmillisec = Long.parseLong(time);
+                long duration = timeInmillisec / 1000;
+                long hours = duration / 3600;
+                minutes = (duration - hours * 3600) / 60;
+                seconds = duration - (hours * 3600 + minutes * 60);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
 
-            holder.txtDuration.setText(minutes+":"+seconds);
-            holder.txtDuration.setVisibility(View.VISIBLE);
+
+            if (minutes == 0 && seconds == 0) {
+                holder.txtDuration.setText("");
+                holder.txtDuration.setVisibility(View.GONE);
+            }else {
+                holder.txtDuration.setText(minutes + ":" + seconds);
+                holder.txtDuration.setVisibility(View.VISIBLE);
+            }
 
             holder.fileType = 2;
 
@@ -116,7 +129,6 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
                 Log.d("errorGlide", ex.toString());
 
             }
-
 
 
         }
@@ -137,18 +149,16 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
                 } else {
 
                     ArrayList<String> arrayList = new ArrayList<>();
-                    if(holder.fileType == 1) {
+                    if (holder.fileType == 1) {
                         arrayList.add("1");
                         arrayList.add(data.get(holder.getAdapterPosition()).get(1));
                         arrayList.add(data.get(holder.getAdapterPosition()).get(2));
 
 
-                    }
-                    else if(holder.fileType == 2) {
+                    } else if (holder.fileType == 2) {
                         arrayList.add("2");
                         arrayList.add(data.get(holder.getAdapterPosition()).get(1));
                     }
-
 
 
                     holder.checkBox.setChecked(true);
@@ -173,13 +183,12 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
                     hashMap.remove(id);
                 } else {
                     ArrayList<String> arrayList = new ArrayList<>();
-                    if(holder.fileType == 1) {
+                    if (holder.fileType == 1) {
                         arrayList.add("1");
                         arrayList.add(data.get(holder.getAdapterPosition()).get(1));
                         arrayList.add(data.get(holder.getAdapterPosition()).get(2));
 
-                    }
-                    else if(holder.fileType == 2) {
+                    } else if (holder.fileType == 2) {
                         arrayList.add("2");
                         arrayList.add(data.get(holder.getAdapterPosition()).get(1));
                     }
@@ -222,9 +231,7 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
         CheckBox checkBox;
         View imgVideoPlayButton;
         TextView txtDuration;
-        Integer fileType=null;
-
-
+        Integer fileType = null;
 
 
         public MediaPickerHolder(View itemView) {
@@ -233,7 +240,7 @@ public class MediaPickerRecyclerAdapter extends RecyclerView.Adapter<MediaPicker
             imageView = (ImageView) itemView.findViewById(R.id.customImage);
             checkBox = (CheckBox) itemView.findViewById(R.id.checkBoxSelectImage);
             imgVideoPlayButton = itemView.findViewById(R.id.imgVideoPlayButton);
-            txtDuration = (TextView)itemView.findViewById(R.id.txtDuration);
+            txtDuration = (TextView) itemView.findViewById(R.id.txtDuration);
         }
     }
 }

@@ -531,9 +531,9 @@ public class EditProfileActivity extends AppCompatActivity {
         }
         else if (requestCode == 100) {
             if (resultCode == RESULT_OK) {
-                Glide.with(this)
+                GlideApp.with(this)
                         .load(mImageUri)
-                        .apply(RequestOptions.circleCropTransform())
+                        .circleCrop()
                         .into(imgUser);
                 sharedPrefs.setProfilePictureFromSharedPref(mImageUri.toString());
                 saveProfilePictureToServerDB();

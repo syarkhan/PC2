@@ -2,6 +2,9 @@ package com.example.sheryarkhan.projectcity.utils;
 
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+
+import com.example.sheryarkhan.projectcity.adapters.NewsFeedRecyclerAdapter;
 
 public abstract class EndlessRecyclerOnScrollListener extends RecyclerView.OnScrollListener {
     public static String TAG = EndlessRecyclerOnScrollListener.class.getSimpleName();
@@ -14,20 +17,24 @@ public abstract class EndlessRecyclerOnScrollListener extends RecyclerView.OnScr
     private int current_page = 0;
 
     private LinearLayoutManager mLinearLayoutManager;
+    //private NewsFeedRecyclerAdapter newsFeedRecyclerAdapter;
 
     public EndlessRecyclerOnScrollListener(LinearLayoutManager linearLayoutManager) {
         this.mLinearLayoutManager = linearLayoutManager;
+        //this.newsFeedRecyclerAdapter = newsFeedRecyclerAdapter;
     }
 
     @Override
     public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
         super.onScrolled(recyclerView, dx, dy);
 
+
         visibleItemCount = recyclerView.getChildCount();
         totalItemCount = mLinearLayoutManager.getItemCount();
         firstVisibleItem = mLinearLayoutManager.findFirstVisibleItemPosition();
 
         if (loading) {
+            Log.d("scrolled2","scrolled2");
             if (totalItemCount > previousTotal) {
                 loading = false;
                 previousTotal = totalItemCount;
@@ -36,10 +43,11 @@ public abstract class EndlessRecyclerOnScrollListener extends RecyclerView.OnScr
         if (!loading && (totalItemCount - visibleItemCount)
                 <= (firstVisibleItem + visibleThreshold)) {
             // End has been reached
-
+            //newsFeedRecyclerAdapter.showLoading();
             // Do something
             current_page++;
 
+            Log.d("scrolled3","scrolled3");
             onLoadMore(current_page);
 
             loading = true;

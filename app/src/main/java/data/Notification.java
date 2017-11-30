@@ -20,7 +20,7 @@ public class Notification {
     private String notificationType;
     @SerializedName("timestamp")
     @Expose
-    private String timestamp;
+    private Long timestamp;
     @SerializedName("PostId")
     @Expose
     private String postId;
@@ -36,6 +36,18 @@ public class Notification {
     @SerializedName("UserInfo")
     @Expose
     private UserInfo userInfo;
+
+    public TownNotification getTownNotification() {
+        return townNotification;
+    }
+
+    public void setTownNotification(TownNotification townNotification) {
+        this.townNotification = townNotification;
+    }
+
+    @SerializedName("TownNotification")
+    @Expose
+    private TownNotification townNotification;
 
     public String getId() {
         return id;
@@ -53,11 +65,11 @@ public class Notification {
         this.notificationType = notificationType;
     }
 
-    public String getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -103,12 +115,25 @@ public class Notification {
 
     public static class CommentInfo {
 
+        @SerializedName("_id")
+        @Expose
+        private String commentId;
+
         @SerializedName("CommentText")
         @Expose
         private String commentText;
         @SerializedName("LikesCount")
         @Expose
         private Integer likesCount;
+
+
+        public String getCommentId() {
+            return commentId;
+        }
+
+        public void setCommentId(String commentId) {
+            this.commentId = commentId;
+        }
 
         public String getCommentText() {
             return commentText;
@@ -144,6 +169,54 @@ public class Notification {
 
     }
 
+    public class TownNotification {
+        @SerializedName("_id")
+        @Expose
+        private String TownNotificationId;
+
+        @SerializedName("NotificationId")
+        @Expose
+        private String notificationId;
+        @SerializedName("ToUserId")
+        @Expose
+        private String toUserId;
+
+        @SerializedName("Read")
+        @Expose
+        private boolean read;
+
+        public String getTownNotificationId() {
+            return TownNotificationId;
+        }
+
+        public void setTownNotificationId(String townNotificationId) {
+            TownNotificationId = townNotificationId;
+        }
+
+        public String getNotificationId() {
+            return notificationId;
+        }
+
+        public void setNotificationId(String notificationId) {
+            this.notificationId = notificationId;
+        }
+
+        public String getToUserId() {
+            return toUserId;
+        }
+
+        public void setToUserId(String toUserId) {
+            this.toUserId = toUserId;
+        }
+
+        public boolean isRead() {
+            return read;
+        }
+
+        public void setRead(boolean read) {
+            this.read = read;
+        }
+    }
 }
 
 

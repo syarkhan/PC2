@@ -49,6 +49,7 @@ import com.google.firebase.storage.UploadTask;
 import com.iceteck.silicompressorr.SiliCompressor;
 
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -65,6 +66,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.UUID;
 
+import data.NewPostProgress;
 import data.PostsPOJO;
 
 public class MainActivity extends AppCompatActivity {
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private boolean isLastItem = false;
-    private List<String> media = new ArrayList<>();
+
 
     private static Integer number_of_posts = 0;
 
@@ -102,15 +104,22 @@ public class MainActivity extends AppCompatActivity {
 
     private MainFragment mainFragment;
     private String URL;
-    final List<MainActivity.Media> medias = new ArrayList<>();
+    //    final List<MainActivity.Media> mediaClassList = new ArrayList<>();
+//    private List<String> media = new ArrayList<>();
+    private StorageReference mediaRef = null;
+    private FirebaseStorage storage;
+
+    private StorageReference storageRef;
+
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mStack = new Stack<>();
-        sharedPrefs = new SharedPrefs(this);
-
+        context = MainActivity.this;
+        sharedPrefs = new SharedPrefs(context);
 
         mainFragment = new MainFragment();
 
@@ -125,13 +134,10 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("onCreate", "onCreate " + counter++);
         mViewPager = (ViewPager) findViewById(R.id.viewpager_container);
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-        firebaseAuth = FirebaseAuth.getInstance();
-        //setupFirebaseAuth();
-
-
-        //setupBottomNavigationView();
         setupViewPager();
+        storage = FirebaseStorage.getInstance();
+
+        storageRef = storage.getReference();
     }
 
     public void addFragmentToStack(String tabId, int tabNumber) {
@@ -333,8 +339,6 @@ public class MainActivity extends AppCompatActivity {
                 String editTextShareNews = resultData.getStringExtra("editTextShareNews");
                 hashMap = (HashMap<Integer, ArrayList<String>>) resultData.getSerializableExtra("hashMap");
                 isFirstTime = false;
-                //query.limitToLast(1).addChildEventListener(mChildListener);
-
 
                 uploadPostDataToFirebase(txtPrimary, txtSecondary, editTextShareNews);
             } else if (resultCode == RESULT_CANCELED) {
@@ -346,114 +350,122 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void uploadPostDataToFirebase(final String txtPrimary, final String txtSecondary, final String editTextShareNews) {
-//        String URL = Constants.protocol + Constants.IP + "/addNewPost";
-//        Long timestamp = System.currentTimeMillis();
-//        Map<String, String> PostData = new HashMap<>();
-//        PostData.put("UserId", firebaseAuth.getCurrentUser().getUid());
-//        PostData.put("Location", txtPrimary);
-//        PostData.put("PostText", editTextShareNews);
-//        PostData.put("timestamp", timestamp.toString());
-//        PostData.put("Town", txtSecondary);
-//
-//
-//        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
-//            @Override
-//            public void onResponse(JSONObject response) {
-//                Log.d("volleyadd",response.toString());
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                Log.d("VolleyError", error.toString());
-//            }
-//        });
-//
-//        RequestQueue queue = Volley.newRequestQueue(this);
-//        queue.add(jsonObjectRequest);
 
-        SharedPrefs sharedPrefs = new SharedPrefs(this);
-        final String username = sharedPrefs.getUsernameFromSharedPref();
+        ((NewsFeedFragment) fragmentList.get(0)).postList.add(1, new NewPostProgress(0));
+        ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemInserted(1);
+        ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemRangeChanged(1,
+                ((NewsFeedFragment) fragmentList.get(0)).postList.size());
+
         final String userid = sharedPrefs.getUserIdFromSharedPref();
-        URL = Constants.protocol + Constants.IP + Constants.addNewPost + "/" + userid;
-
-        final String key = databaseReference.child("posts").push().getKey();
-
-
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-
-        StorageReference storageRef = storage.getReference();
-
-        //final DatabaseReference queryForUserNumberOfPosts = databaseReference.child("Users");
-        // Uri file = Uri.fromFile(new File(mImageUri.toString()));
-
-        //final Iterator iterator = hashMap.values().iterator();
-        //Map<Integer, ArrayList<Object>> hMap = Collections.emptyMap();
-        //int i = 0;
+        URL = Constants.protocol + Constants.IP + Constants.addNewPost;
 
         if (hashMap != null) {
+            boolean videoContains = false;
+            //List<String> videos = new ArrayList<>();
+//            for (ArrayList<String> item : hashMap.values()) {
+//                if (Integer.parseInt(item.get(0)) == 2) {
+//                    videos.add(item.get(1));
+//                }
+//            }
             for (ArrayList<String> item : hashMap.values()) {
-
-
-                //String type = getMimeType(Uri.fromFile(new File(item)));
-                if (Integer.parseInt(item.get(0)) == 1) // 1 FOR IMAGE
-                {
-                    Bitmap bmp = ImageCompression.getImageFromResult(MainActivity.this, item.get(1));//your compressed bitmap here
-                    bmp = ImageCompression.rotate(bmp, Integer.parseInt(item.get(2)));
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                    byte[] imageByteData = baos.toByteArray();
-
-                    try {
-                        baos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    bmp.recycle();
-                    try {
-                        MainActivity.Media media = new MainActivity.Media(1, imageByteData, null);
-                        medias.add(media);
-                    } catch (Exception ex) {
-                        Log.d("mediaError", ex.toString());
-                    }
-                } else if (Integer.parseInt(item.get(0)) == 2) // 2 FOR VIDEO
-                {
-                    //create destination directory
-                    File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + getPackageName() + "/media/videos");
-                    if (f.mkdirs() || f.isDirectory()) {
-                        //compress and output new video specs
-                        new VideoCompressAsyncTask(this).execute(item.get(1), f.getPath());
-                    }
+                if (Integer.parseInt(item.get(0)) == 2) { // 2 FOR VIDEO
+                    videoContains = true;
+                    //videos.add(item.get(1));
+                }
+            }
+//            for (ArrayList<String> item : hashMap.values()) {
+//                //String type = getMimeType(Uri.fromFile(new File(item)));
+//
+//                if (Integer.parseInt(item.get(0)) == 1) // 1 FOR IMAGE
+//                {
+//                    Bitmap bmp = ImageCompression.getImageFromResult(context, item.get(1));//your compressed bitmap here
+//                    bmp = ImageCompression.rotate(bmp, Integer.parseInt(item.get(2)));
+//                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//                    bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+//                    byte[] imageByteData = baos.toByteArray();
+//
 //                    try {
-//                        byte[] videoByte = convertPathToBytes(String.valueOf(item.get(1)));
-//                        MainActivity.Media media = new MainActivity.Media(2, null, videoByte);
-//                        medias.add(media);
+//                        baos.close();
 //                    } catch (IOException e) {
 //                        e.printStackTrace();
 //                    }
-                    Log.d("VIDEOPOST", "VIDEOPOST");
+//                    bmp.recycle();
+//                    //String uniqueId = UUID.randomUUID().toString();
+//
+//                    MainActivity.Media mediaClass = new MainActivity.Media(1, imageByteData);
+//                    mediaClassList.add(mediaClass);
+//                    //media.add("image:" + uniqueId);
+//
+//                }
+//            }
+            ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(25);
+            ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+            if (!videoContains) {
+
+                new OnlyImagesUploadAsynTask(context).execute(txtPrimary, txtSecondary, editTextShareNews);
+                //uploadImagesAndSavePostDataInMongo(txtPrimary, txtSecondary, editTextShareNews, mediaClassList, media);
+            } else {
+                //create destination directory
+                File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + getPackageName() + "/media/videos");
+                if (f.mkdirs() || f.isDirectory()) {
+                    //compress and output new video specs
+                    new VideoCompressAsyncTask(context).execute(f.getPath(), txtPrimary, txtSecondary, editTextShareNews);
+
                 }
             }
-        }
 
-        if (medias.size() == 0) {
-            //MONGODB INSERT
+            Log.d("VIDEOPOST", "VIDEOPOST");
+
+        } else {
+            Map<String, Map<String, Object>> Data = new HashMap<>();
 
             Long timestamp = System.currentTimeMillis();
             Map<String, Object> PostData = new HashMap<>();
             PostData.put("UserId", userid);
             PostData.put("Location", txtPrimary);
             PostData.put("PostText", editTextShareNews);
-            PostData.put("timestamp", timestamp.toString());
+            PostData.put("timestamp", timestamp);
             PostData.put("Town", txtSecondary);
             PostData.put("LikesCount", 0);
             PostData.put("CommentsCount", 0);
 
+            Map<String, Object> NotificationData = new HashMap<>();
+            NotificationData.put("ByUserId", userid);
+            NotificationData.put("timestamp", timestamp);
+            NotificationData.put("Read", false);
+            NotificationData.put("NotificationType", "town_post");
 
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
+            Data.put("PostData", PostData);
+            Data.put("NotificationData", NotificationData);
+
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
                     Log.d("volleyadd", response.toString());
-                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                    try {
+                        if (response.getBoolean("success")) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                }
+                            });
+
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                    Toast.makeText(context, "Could not upload, try again!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
                 }
             }, new Response.ErrorListener() {
                 @Override
@@ -463,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
 
-            RequestQueue queue = Volley.newRequestQueue(this);
+            RequestQueue queue = Volley.newRequestQueue(context);
             queue.add(jsonObjectRequest);
             jsonObjectRequest.setRetryPolicy(new RetryPolicy() {
                 @Override
@@ -482,242 +494,332 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-
-            //FIREBASE DB INSERT
-            Long timeStamp = System.currentTimeMillis();
-            PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
-                    txtPrimary, txtSecondary, Collections.<String, Boolean>emptyMap());
-
-
-//            Map<String, Object> childUpdates = new HashMap<>();
-//            childUpdates.put("/posts/" + key, postsPOJO);
-//            databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                @Override
-//                public void onSuccess(Void aVoid) {
+        }
 //
 //
-//                    //SEND NOTIFICATION TO USERS
-//                    //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-//                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+//        if (hashMap == null) {
+//            //MONGODB INSERT
 //
-//                    //int number_of_posts=0;
-//                    queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
+//
+//        } else {
+//
+//            final int last_item = (medias.size() - 1);
+//
+//            for (int i = 0; i < medias.size(); i++) {
+//                if (medias.get(i).getMediaType() == 1) // IMAGE
+//                {
+//                    if (i == last_item) {  //IF Last Image/Video
+//                        isLastItem = true;
+//                    }
+//                    String uniqueId = UUID.randomUUID().toString();
+//                    media.add("image:" + uniqueId);
+//                    final StorageReference mediaRef = storageRef.child("images/image:" + uniqueId);
+//
+//                    mediaRef.putBytes(medias.get(i).getImageBytes())
+//                            .addOnFailureListener(new OnFailureListener() {
+//                                @Override
+//                                public void onFailure(@NonNull Exception e) {
+//                                    Log.d("storageerror", e.toString());
+//                                }
+//                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
 //                        @Override
-//                        public void onDataChange(DataSnapshot dataSnapshot) {
-//                            number_of_posts = dataSnapshot.getValue(Integer.class);
-//                            queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
+//                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                            Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+//
+//
+//                            if (isLastItem) {
+//
+//                                //MONGODB INSERT
+//                                Map<String, Map<String, Object>> Data = new HashMap<>();
+//
+//                                Long timestamp = System.currentTimeMillis();
+//                                Map<String, Object> PostData = new HashMap<>();
+//                                PostData.put("UserId", userid);
+//                                PostData.put("Location", txtPrimary);
+//                                PostData.put("PostText", editTextShareNews);
+//                                PostData.put("timestamp", timestamp.toString());
+//                                PostData.put("Town", txtSecondary);
+//                                PostData.put("ContentPost", media);
+//                                PostData.put("LikesCount", 0);
+//                                PostData.put("CommentsCount", 0);
+//
+//
+//                                Map<String, Object> NotificationData = new HashMap<>();
+//                                NotificationData.put("ByUserId", userid);
+//                                NotificationData.put("timestamp", timestamp);
+//                                NotificationData.put("Read", false);
+//                                NotificationData.put("NotificationType", "town_post");
+//
+//                                Data.put("PostData", PostData);
+//                                Data.put("NotificationData", NotificationData);
+//
+//
+//                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+//                                    @Override
+//                                    public void onResponse(JSONObject response) {
+//                                        Log.d("volleyadd", response.toString());
+//                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+//                                    }
+//                                }, new Response.ErrorListener() {
+//                                    @Override
+//                                    public void onErrorResponse(VolleyError error) {
+//                                        Log.d("VolleyError", error.toString());
+//                                    }
+//                                });
+//
+//
+//                                RequestQueue queue = Volley.newRequestQueue(context);
+//                                queue.add(jsonObjectRequest);
+//                                //                                Long timeStamp = System.currentTimeMillis();
+////                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
+////                                        txtPrimary, txtSecondary,
+////                                        media, Collections.<String, Boolean>emptyMap());
+////
+////                                Map<String, Object> childUpdates = new HashMap<>();
+////                                childUpdates.put("/posts/" + key, postsPOJO);
+//////                                mDatabase.child("posts").child(key).child("likes").setValue(0);
+////                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+////                                    @Override
+////                                    public void onSuccess(Void aVoid) {
+////
+////                                        //SEND NOTIFICATION TO USERS
+////                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
+////                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+////
+////                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
+////                                            @Override
+////                                            public void onDataChange(DataSnapshot dataSnapshot) {
+////                                                number_of_posts = dataSnapshot.getValue(Integer.class);
+////                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
+////                                            }
+////
+////                                            @Override
+////                                            public void onCancelled(DatabaseError databaseError) {
+////
+////                                            }
+////                                        });
+////
+////                                    }
+////                                });
+//
+//                            }
 //                        }
-//
+//                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
 //                        @Override
-//                        public void onCancelled(DatabaseError databaseError) {
+//                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+//                            Toast.makeText(context, progress + "% done", Toast.LENGTH_SHORT).show();
+//                        }
+//                    });
+//                } else if (medias.get(i).getMediaType() == 2) { //VIDEO
 //
+//                    if (i == last_item) {  //IF Last Image/Video
+//                        isLastItem = true;
+//                    }
+//
+//                    String uniqueId = UUID.randomUUID().toString();
+//                    media.add("video:" + uniqueId);
+//                    StorageReference mediaRef = storageRef.child("images/video:" + uniqueId);
+//
+//                    mediaRef.putBytes(medias.get(i).getVideoBytes()).addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            Log.d("storageerror", e.toString());
+//                        }
+//                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                        @Override
+//                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                            Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+//                            if (isLastItem) {
+//                                //MONGODB INSERT
+//                                Map<String, Map<String, Object>> Data = new HashMap<>();
+//
+//                                Long timestamp = System.currentTimeMillis();
+//                                Map<String, Object> PostData = new HashMap<>();
+//                                PostData.put("UserId", userid);
+//                                PostData.put("Location", txtPrimary);
+//                                PostData.put("PostText", editTextShareNews);
+//                                PostData.put("timestamp", timestamp.toString());
+//                                PostData.put("Town", txtSecondary);
+//                                PostData.put("ContentPost", media);
+//                                PostData.put("LikesCount", 0);
+//                                PostData.put("CommentsCount", 0);
+//
+//                                Map<String, Object> NotificationData = new HashMap<>();
+//                                NotificationData.put("ByUserId", userid);
+//                                NotificationData.put("timestamp", timestamp);
+//                                NotificationData.put("Read", false);
+//                                NotificationData.put("NotificationType", "town_post");
+//
+//                                Data.put("PostData", PostData);
+//                                Data.put("NotificationData", NotificationData);
+//
+//                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+//                                    @Override
+//                                    public void onResponse(JSONObject response) {
+//                                        Log.d("volleyadd", response.toString());
+//                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+//                                    }
+//                                }, new Response.ErrorListener() {
+//                                    @Override
+//                                    public void onErrorResponse(VolleyError error) {
+//                                        Log.d("VolleyError", error.toString());
+//                                    }
+//                                });
+//
+//
+//                                RequestQueue queue = Volley.newRequestQueue(context);
+//                                queue.add(jsonObjectRequest);
+////                                Long timeStamp = System.currentTimeMillis();
+////
+////                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
+////                                        txtPrimary, txtSecondary,
+////                                        media, Collections.<String, Boolean>emptyMap());
+////
+////                                Map<String, Object> childUpdates = new HashMap<>();
+////                                childUpdates.put("/posts/" + key, postsPOJO);
+////                                //mDatabase.child("posts").child(key).child("likes").setValue(0);
+////                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+////                                    @Override
+////                                    public void onSuccess(Void aVoid) {
+////
+////                                        //SEND NOTIFICATION TO USERS
+////                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
+////                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+////
+////                                        //int number_of_posts=0;
+////                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
+////                                            @Override
+////                                            public void onDataChange(DataSnapshot dataSnapshot) {
+////                                                number_of_posts = dataSnapshot.getValue(Integer.class);
+////                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
+////                                            }
+////
+////                                            @Override
+////                                            public void onCancelled(DatabaseError databaseError) {
+////
+////                                            }
+////                                        });
+////
+////                                    }
+////                                });
+//
+//                            }
+//                        }
+//                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//                        @Override
+//                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+//                            Toast.makeText(context, progress + "% done", Toast.LENGTH_SHORT).show();
+//                        }
+//                    }).addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            Log.d("uploadError", e.toString());
 //                        }
 //                    });
 //
 //                }
-//            });
-
-        } else {
-
-            final int last_item = (medias.size() - 1);
-
-            for (int i = 0; i < medias.size(); i++) {
-                if (medias.get(i).getMediaType() == 1) // IMAGE
-                {
-                    if (i == last_item) {  //IF Last Image/Video
-                        isLastItem = true;
-                    }
-                    String uniqueId = UUID.randomUUID().toString();
-                    media.add("image:" + uniqueId);
-                    final StorageReference mediaRef = storageRef.child("images/image:" + uniqueId);
-
-                    mediaRef.putBytes(medias.get(i).getImageBytes())
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Log.d("storageerror", e.toString());
-                                }
-                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
-
-
-                            if (isLastItem) {
-
-                                //MONGODB INSERT
-                                Long timestamp = System.currentTimeMillis();
-                                Map<String, Object> PostData = new HashMap<>();
-                                PostData.put("UserId", userid);
-                                PostData.put("Location", txtPrimary);
-                                PostData.put("PostText", editTextShareNews);
-                                PostData.put("timestamp", timestamp.toString());
-                                PostData.put("Town", txtSecondary);
-                                PostData.put("ContentPost", media);
-                                PostData.put("LikesCount", 0);
-                                PostData.put("CommentsCount", 0);
-
-
-                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
-                                    @Override
-                                    public void onResponse(JSONObject response) {
-                                        Log.d("volleyadd", response.toString());
-                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        Log.d("VolleyError", error.toString());
-                                    }
-                                });
-
-
-                                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-                                queue.add(jsonObjectRequest);
-                                //                                Long timeStamp = System.currentTimeMillis();
-//                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
-//                                        txtPrimary, txtSecondary,
-//                                        media, Collections.<String, Boolean>emptyMap());
+//            }
 //
-//                                Map<String, Object> childUpdates = new HashMap<>();
-//                                childUpdates.put("/posts/" + key, postsPOJO);
-////                                mDatabase.child("posts").child(key).child("likes").setValue(0);
-//                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                                    @Override
-//                                    public void onSuccess(Void aVoid) {
-//
-//                                        //SEND NOTIFICATION TO USERS
-//                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-//                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
-//
-//                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
-//                                            @Override
-//                                            public void onDataChange(DataSnapshot dataSnapshot) {
-//                                                number_of_posts = dataSnapshot.getValue(Integer.class);
-//                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
-//                                            }
-//
-//                                            @Override
-//                                            public void onCancelled(DatabaseError databaseError) {
-//
-//                                            }
-//                                        });
-//
-//                                    }
-//                                });
-
-                            }
-                        }
-                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            Toast.makeText(MainActivity.this, progress + "% done", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else if (medias.get(i).getMediaType() == 2) { //VIDEO
-
-                    if (i == last_item) {  //IF Last Image/Video
-                        isLastItem = true;
-                    }
-
-                    String uniqueId = UUID.randomUUID().toString();
-                    media.add("video:" + uniqueId);
-                    StorageReference mediaRef = storageRef.child("images/video:" + uniqueId);
-
-                    mediaRef.putBytes(medias.get(i).getVideoBytes()).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d("storageerror", e.toString());
-                        }
-                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
-                            if (isLastItem) {
-                                //MONGODB INSERT
-                                Long timestamp = System.currentTimeMillis();
-                                Map<String, Object> PostData = new HashMap<>();
-                                PostData.put("UserId", userid);
-                                PostData.put("Location", txtPrimary);
-                                PostData.put("PostText", editTextShareNews);
-                                PostData.put("timestamp", timestamp.toString());
-                                PostData.put("Town", txtSecondary);
-                                PostData.put("ContentPost", media);
-                                PostData.put("LikesCount", 0);
-                                PostData.put("CommentsCount", 0);
-
-
-                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(PostData), new Response.Listener<JSONObject>() {
-                                    @Override
-                                    public void onResponse(JSONObject response) {
-                                        Log.d("volleyadd", response.toString());
-                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        Log.d("VolleyError", error.toString());
-                                    }
-                                });
-
-
-                                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-                                queue.add(jsonObjectRequest);
-//                                Long timeStamp = System.currentTimeMillis();
-//
-//                                PostsPOJO postsPOJO = new PostsPOJO(0, userid, key, "profilepic:" + userid, username, timeStamp, editTextShareNews,
-//                                        txtPrimary, txtSecondary,
-//                                        media, Collections.<String, Boolean>emptyMap());
-//
-//                                Map<String, Object> childUpdates = new HashMap<>();
-//                                childUpdates.put("/posts/" + key, postsPOJO);
-//                                //mDatabase.child("posts").child(key).child("likes").setValue(0);
-//                                databaseReference.updateChildren(childUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                                    @Override
-//                                    public void onSuccess(Void aVoid) {
-//
-//                                        //SEND NOTIFICATION TO USERS
-//                                        //sendNotificationToUsers(key, txtPrimary, txtSecondary, editTextShareNews);
-//                                        FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
-//
-//                                        //int number_of_posts=0;
-//                                        queryForUserNumberOfPosts.child(userid).child("number_of_posts").addListenerForSingleValueEvent(new ValueEventListener() {
-//                                            @Override
-//                                            public void onDataChange(DataSnapshot dataSnapshot) {
-//                                                number_of_posts = dataSnapshot.getValue(Integer.class);
-//                                                queryForUserNumberOfPosts.child(userid).child("number_of_posts").setValue(number_of_posts + 1);
-//                                            }
-//
-//                                            @Override
-//                                            public void onCancelled(DatabaseError databaseError) {
-//
-//                                            }
-//                                        });
-//
-//                                    }
-//                                });
-
-                            }
-                        }
-                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            Toast.makeText(MainActivity.this, progress + "% done", Toast.LENGTH_SHORT).show();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d("uploadError", e.toString());
-                        }
-                    });
-
-                }
-            }
-
-        }
+//        }
     }
+
+//    private void uploadImagesAndSavePostDataInMongo(final String location, final String town, final String postText
+//            , List<Media> mediaClassList, final List<String> media) {
+//
+//
+//        for (int i = 0; i < mediaClassList.size(); i++) {
+//            String uniqueId = UUID.randomUUID().toString();
+//
+//            media.add("image:" + uniqueId);
+//            mediaRef = storageRef.child("images/image:" + uniqueId);
+//
+//
+//            mediaRef.putBytes(mediaClassList.get(i).getbytes())
+//                    .addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            Log.d("storageerror", e.toString());
+//                        }
+//                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                @Override
+//                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                    Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+//                    contentCount++;
+//                    //MONGODB INSERT
+//                    Map<String, Map<String, Object>> Data = new HashMap<>();
+//
+//                    Long timestamp = System.currentTimeMillis();
+//                    String userid = sharedPrefs.getUserIdFromSharedPref();
+//                    Map<String, Object> PostData = new HashMap<>();
+//                    PostData.put("UserId", userid);
+//                    PostData.put("Location", location);
+//                    PostData.put("PostText", postText);
+//                    PostData.put("timestamp", timestamp);
+//                    PostData.put("Town", town);
+//                    PostData.put("ContentPost", media);
+//                    PostData.put("LikesCount", 0);
+//                    PostData.put("CommentsCount", 0);
+//
+//
+//                    Map<String, Object> NotificationData = new HashMap<>();
+//                    NotificationData.put("ByUserId", userid);
+//                    NotificationData.put("timestamp", timestamp);
+//                    NotificationData.put("Read", false);
+//                    NotificationData.put("NotificationType", "town_post");
+//
+//                    Data.put("PostData", PostData);
+//                    Data.put("NotificationData", NotificationData);
+//
+//
+//                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+//                        @Override
+//                        public void onResponse(JSONObject response) {
+//                            Log.d("volleyadd", response.toString());
+//                            try {
+//                                if (response.getBoolean("success")) {
+//                                    runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+//                                        }
+//                                    });
+//
+//                                } else {
+//                                    runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+//                                            Toast.makeText(context, "Could not upload, try again!", Toast.LENGTH_SHORT).show();
+//                                        }
+//                                    });
+//                                }
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                            //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+//                        }
+//                    }, new Response.ErrorListener() {
+//                        @Override
+//                        public void onErrorResponse(VolleyError error) {
+//                            Log.d("VolleyError", error.toString());
+//                        }
+//                    });
+//
+//
+//                    RequestQueue queue = Volley.newRequestQueue(context);
+//                    queue.add(jsonObjectRequest);
+//                }
+//            }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//                @Override
+//                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//
+//                }
+//            });
+//        }
+//
+//    }
 
     private byte[] convertPathToBytes(String path) throws IOException {
 
@@ -736,27 +838,13 @@ public class MainActivity extends AppCompatActivity {
         return bytes;
     }
 
-//    private void sendNotificationToUsers(String key, String txtPrimary, String txtSecondary, String editTextShareNews) {
-//        Map<String, String> townAndMessage = new HashMap<>();
-//        townAndMessage.put("town", txtSecondary.replace(" ", "_"));
-//        townAndMessage.put("message", editTextShareNews);
-//        townAndMessage.put("postId", key);
-//        mVolleyService = new VolleyService(mResultCallback, MainActivity.this);
-//        mVolleyService.postDataVolley(Request.Method.POST,
-//                Constants.protocol + Constants.IP + "/sendNotification",
-//                new JSONObject(townAndMessage));
-//    }
-
-
     private static class Media {
-        private byte[] imageBytes = null;
-        private byte[] videoBytes = null;
+        private byte[] bytes = null;
         private Integer mediaType;
 
-        private Media(Integer mediaType, byte[] imageBytes, byte[] videoBytes) {
+        private Media(Integer mediaType, byte[] bytes) {
             this.mediaType = mediaType;
-            this.imageBytes = imageBytes;
-            this.videoBytes = videoBytes;
+            this.bytes = bytes;
 
         }
 
@@ -764,13 +852,10 @@ public class MainActivity extends AppCompatActivity {
             return mediaType;
         }
 
-        public byte[] getImageBytes() {
-            return imageBytes;
+        public byte[] getbytes() {
+            return bytes;
         }
 
-        public byte[] getVideoBytes() {
-            return videoBytes;
-        }
     }
 
 
@@ -816,9 +901,201 @@ public class MainActivity extends AppCompatActivity {
         Log.d("onDestroy", "onDestroy " + counter++);
     }
 
-    class VideoCompressAsyncTask extends AsyncTask<String, String, String> {
+    private class OnlyImagesUploadAsynTask extends AsyncTask<Object, String, ArrayList<Object>> {
+        Context mContext;
+        int contentCount = 0;
+
+        public OnlyImagesUploadAsynTask(Context context) {
+            this.mContext = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected ArrayList<Object> doInBackground(Object... objects) {
+            List<Media> mediaClassList = new ArrayList<>();
+            List<String> mediaList = new ArrayList<>();
+
+            for (ArrayList<String> item : hashMap.values()) {
+                //String type = getMimeType(Uri.fromFile(new File(item)));
+
+                if (Integer.parseInt(item.get(0)) == 1) // 1 FOR IMAGE
+                {
+                    Bitmap bmp = ImageCompression.getImageFromResult(context, item.get(1));//your compressed bitmap here
+                    bmp = ImageCompression.rotate(bmp, Integer.parseInt(item.get(2)));
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                    byte[] imageByteData = baos.toByteArray();
+
+                    try {
+                        baos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bmp.recycle();
+                    //String uniqueId = UUID.randomUUID().toString();
+
+                    MainActivity.Media mediaClass = new MainActivity.Media(1, imageByteData);
+                    mediaClassList.add(mediaClass);
+                    //media.add("image:" + uniqueId);
+
+                }
+            }
+            ArrayList<Object> arrayList = new ArrayList<>();
+
+            arrayList.add(objects[0]); //0, primary
+            arrayList.add(objects[1]); //1, secondary
+            arrayList.add(objects[2]); //2, postText
+            arrayList.add(mediaClassList); //3, mediaClassList
+            arrayList.add(mediaList); //4, mediaList
+
+            return arrayList;
+        }
+
+        @Override
+        protected void onPostExecute(final ArrayList<Object> arrayList) {
+            super.onPostExecute(arrayList);
+            ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(70);
+            ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+            Log.d("postarray", arrayList.toString());
+            Toast.makeText(context, "On Post Execute", Toast.LENGTH_SHORT).show();
+            final List<String> mediaList = ((List<String>) arrayList.get(4));
+            final List<Media> mediaClassList = ((List<Media>) arrayList.get(3));
+            for (int i = 0; i < mediaClassList.size(); i++) {
+
+                String uniqueId = UUID.randomUUID().toString();
+
+                mediaList.add("image:" + uniqueId);
+                mediaRef = storageRef.child("images/image:" + uniqueId);
+
+                mediaRef.putBytes(mediaClassList.get(i).getbytes())
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d("storageerror", e.toString());
+                            }
+                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        contentCount++;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+                                ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(80);
+                                ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+                                Log.d("ContentCount", String.valueOf(contentCount));
+                            }
+                        });
+                        if (contentCount == mediaList.size()) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+                                    ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(90);
+                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+
+                                    Log.d("ContentCount", String.valueOf(contentCount));
+
+                                }
+
+                            });
+
+                            //((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                            Toast.makeText(context, "Last Item uploaded", Toast.LENGTH_SHORT).show();
+                            //MONGODB INSERT
+                            Map<String, Map<String, Object>> Data = new HashMap<>();
+
+                            Long timestamp = System.currentTimeMillis();
+                            String userid = sharedPrefs.getUserIdFromSharedPref();
+                            Map<String, Object> PostData = new HashMap<>();
+                            PostData.put("UserId", userid);
+                            PostData.put("Location", arrayList.get(0));
+                            PostData.put("PostText", arrayList.get(2));
+                            PostData.put("timestamp", timestamp);
+                            PostData.put("Town", arrayList.get(1));
+                            PostData.put("ContentPost", mediaList);
+                            PostData.put("LikesCount", 0);
+                            PostData.put("CommentsCount", 0);
+
+
+                            Map<String, Object> NotificationData = new HashMap<>();
+                            NotificationData.put("ByUserId", userid);
+                            NotificationData.put("timestamp", timestamp);
+                            NotificationData.put("Read", false);
+                            NotificationData.put("NotificationType", "town_post");
+
+                            Data.put("PostData", PostData);
+                            Data.put("NotificationData", NotificationData);
+
+
+                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    Log.d("volleyadd", response.toString());
+                                    try {
+                                        if (response.getBoolean("success")) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                                }
+                                            });
+
+                                        } else {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                                    Toast.makeText(context, "Could not upload, try again!", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Log.d("VolleyError", error.toString());
+                                }
+                            });
+                            RequestQueue queue = Volley.newRequestQueue(context);
+                            queue.add(jsonObjectRequest);
+                        }
+                    }
+
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "uploading", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
+            }
+
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+        }
+    }
+
+    private class VideoCompressAsyncTask extends AsyncTask<Object, String, ArrayList<Object>> {
 
         Context mContext;
+        int contentCount = 0;
 
         public VideoCompressAsyncTask(Context context) {
             mContext = context;
@@ -830,52 +1107,493 @@ public class MainActivity extends AppCompatActivity {
           /*  imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.ic_photo_camera_white_48px));
             compressionMsg.setVisibility(View.VISIBLE);
             picDescription.setVisibility(View.GONE);*/
+
+
         }
 
         @Override
-        protected String doInBackground(String... paths) {
-            String filePath = null;
-            try {
+        protected ArrayList<Object> doInBackground(final Object... paths) {
+            List<String> filePaths = new ArrayList<>();
+            //publishProgress("50");
+            List<MainActivity.Media> mediaClassList = new ArrayList<>();
+            List<String> mediaList = new ArrayList<>();
 
-                //File uri = new File(paths[0]);
-                //Uri uri = Uri.parse(paths[0]);
+            for (ArrayList<String> item : hashMap.values()) {
+                //String type = getMimeType(Uri.fromFile(new File(item)));
 
-                //Uri baseUri = Uri.parse("content://media/external/video/media");
-                //Uri uri = Uri.withAppendedPath(baseUri, "" + paths[0]);
-                //Log.d("CompressUri",uri.toString());
-                filePath = SiliCompressor.with(mContext).compressVideo(paths[0], paths[1]);
 
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+                if (Integer.parseInt(item.get(0)) == 1) // 1 FOR IMAGE
+                {
+                    Bitmap bmp = ImageCompression.getImageFromResult(context, item.get(1));//your compressed bitmap here
+                    bmp = ImageCompression.rotate(bmp, Integer.parseInt(item.get(2)));
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                    byte[] imageByteData = baos.toByteArray();
+
+                    try {
+                        baos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bmp.recycle();
+                    //String uniqueId = UUID.randomUUID().toString();
+
+                    MainActivity.Media mediaClass = new MainActivity.Media(1, imageByteData);
+                    mediaClassList.add(mediaClass);
+                    //media.add("image:" + uniqueId);
+
+                }else{
+                    try {
+                        Log.d("CompressVideo", "Compress InProgress");
+                        String filePath = SiliCompressor.with(mContext).compressVideo(item.get(1), (String) paths[0]);
+                        Log.d("CompressVideo", "Compress Complete");
+                        filePaths.add(filePath);
+                        byte[] videoByte = convertPathToBytes(String.valueOf(filePath));
+                        final MainActivity.Media mediaClass = new MainActivity.Media(2, videoByte);
+                        //mediaClassList.add(mediaClass);
+                        mediaClassList.add(mediaClass);
+                        try {
+                            new File(filePath).delete();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    } catch (URISyntaxException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
             }
-            return filePath;
+
+
+//            for (String video : (List<String>) paths[0]) {
+//                try {
+//                    Log.d("CompressVideo", "Compress InProgress");
+//                    String filePath = SiliCompressor.with(mContext).compressVideo(video, (String) paths[1]);
+//                    Log.d("CompressVideo", "Compress Complete");
+//                    filePaths.add(filePath);
+//                    byte[] videoByte = convertPathToBytes(String.valueOf(filePath));
+//                    final MainActivity.Media mediaClass = new MainActivity.Media(2, videoByte);
+//                    //mediaClassList.add(mediaClass);
+//                    mediaClassList.add(mediaClass);
+//                    try {
+//                        new File(filePath).delete();
+//                    } catch (Exception ex) {
+//                        ex.printStackTrace();
+//                    }
+//                } catch (URISyntaxException e) {
+//                    e.printStackTrace();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+            Log.d("progress%", String.valueOf(((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).getProgress()));
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(50);
+                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+                }
+            });
+
+
+//            for (int i = 0; i < ((List<Media>) paths[5]).size(); i++) {
+//                String uniqueId = UUID.randomUUID().toString();
+//                mediaList.add("video:" + uniqueId);
+//                mediaRef = storageRef.child("images/video:" + uniqueId);
+//
+//                mediaRef.putBytes(((List<Media>) paths[5]).get(i).getbytes())
+//                        .addOnFailureListener(new OnFailureListener() {
+//                            @Override
+//                            public void onFailure(@NonNull Exception e) {
+//                                Log.d("storageerror", e.toString());
+//                            }
+//                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+//                                contentCount++;
+//                                Log.d("ContentCount", String.valueOf(contentCount));
+//                                if (contentCount == mediaList.size()) {
+//                                    Toast.makeText(context, "Last Item uploaded", Toast.LENGTH_SHORT).show();
+//                                    //MONGODB INSERT
+//                                    Map<String, Map<String, Object>> Data = new HashMap<>();
+//
+//                                    Long timestamp = System.currentTimeMillis();
+//                                    String userid = sharedPrefs.getUserIdFromSharedPref();
+//                                    Map<String, Object> PostData = new HashMap<>();
+//                                    PostData.put("UserId", userid);
+//                                    PostData.put("Location", paths[2]);
+//                                    PostData.put("PostText", paths[4]);
+//                                    PostData.put("timestamp", timestamp);
+//                                    PostData.put("Town", paths[3]);
+//                                    PostData.put("ContentPost", mediaList);
+//                                    PostData.put("LikesCount", 0);
+//                                    PostData.put("CommentsCount", 0);
+//
+//
+//                                    Map<String, Object> NotificationData = new HashMap<>();
+//                                    NotificationData.put("ByUserId", userid);
+//                                    NotificationData.put("timestamp", timestamp);
+//                                    NotificationData.put("Read", false);
+//                                    NotificationData.put("NotificationType", "town_post");
+//
+//                                    Data.put("PostData", PostData);
+//                                    Data.put("NotificationData", NotificationData);
+//
+//
+//                                    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+//                                        @Override
+//                                        public void onResponse(JSONObject response) {
+//                                            Log.d("volleyadd", response.toString());
+//                                            //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+//                                        }
+//                                    }, new Response.ErrorListener() {
+//                                        @Override
+//                                        public void onErrorResponse(VolleyError error) {
+//                                            Log.d("VolleyError", error.toString());
+//                                        }
+//                                    });
+//
+//
+//                                    RequestQueue queue = Volley.newRequestQueue(context);
+//                                    queue.add(jsonObjectRequest);
+//
+//
+//                                }
+//
+//                            }
+//                        });
+//
+//                    }
+//                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getBaseContext(), "uploading", Toast.LENGTH_SHORT).show();
+//                            }
+//                        });
+//                    }
+//                });
+//            }
+
+            //String filePath = null;
+            ArrayList<Object> arrayList = new ArrayList<>();
+//new VideoCompressAsyncTask(context).execute(f.getPath(), txtPrimary, txtSecondary, editTextShareNews);
+            //File uri = new File(paths[0]);
+            //Uri uri = Uri.parse(paths[0]);
+
+            //Uri baseUri = Uri.parse("content://media/external/video/media");
+            //Uri uri = Uri.withAppendedPath(baseUri, "" + paths[0]);
+            //Log.d("CompressUri",uri.toString());
+            //filePath = SiliCompressor.with(mContext).compressVideo((String) paths[0],(String) paths[1]);
+            arrayList.add(filePaths); //0
+            arrayList.add(paths[1]); //1, location
+            arrayList.add(paths[2]); //2, town
+            arrayList.add(paths[3]); //3, textnews
+            arrayList.add(mediaClassList); //4, mediaClassList
+            arrayList.add(mediaList); //5, mediaList
+
+            return arrayList;
 
         }
 
 
         @Override
-        protected void onPostExecute(String compressedFilePath) {
-            super.onPostExecute(compressedFilePath);
-            File imageFile = new File(compressedFilePath);
-            float length = imageFile.length() / 1024f; // Size in KB
-            String value;
-            if (length >= 1024)
-                value = length / 1024f + " MB";
-            else
-                value = length + " KB";
-            String text = String.format(Locale.US, "%s\nName: %s\nSize: %s", getString(R.string.video_compression_complete), imageFile.getName(), value);
-            Log.d("CompressComplete", text);
-            Log.i("Silicompressor", "Path: " + compressedFilePath);
+        protected void onPostExecute(final ArrayList<Object> arrayList) {
+            super.onPostExecute(arrayList);
+            ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(70);
+            ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+            Log.d("postarray", arrayList.toString());
+            Toast.makeText(context, "On Post Execute", Toast.LENGTH_SHORT).show();
+            final List<String> mediaList = ((List<String>) arrayList.get(5));
+            final List<Media> mediaClassList = ((List<Media>) arrayList.get(4));
+            for (int i = 0; i < mediaClassList.size(); i++) {
 
-            try {
-                byte[] videoByte = convertPathToBytes(String.valueOf(imageFile));
-                MainActivity.Media media = new MainActivity.Media(2, null, videoByte);
-                medias.add(media);
-            } catch (IOException e) {
-                e.printStackTrace();
+                String uniqueId = UUID.randomUUID().toString();
+                if (mediaClassList.get(i).getMediaType() == 1) {
+                    mediaList.add("image:" + uniqueId);
+                    mediaRef = storageRef.child("images/image:" + uniqueId);
+                } else {
+                    mediaList.add("video:" + uniqueId);
+                    mediaRef = storageRef.child("images/video:" + uniqueId);
+                }
+                //mediaList.add("video:" + uniqueId);
+                //mediaRef = storageRef.child("images/video:" + uniqueId);
+
+                mediaRef.putBytes(mediaClassList.get(i).getbytes())
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d("storageerror", e.toString());
+                            }
+                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        contentCount++;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+                                ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(80);
+                                ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+                                Log.d("ContentCount", String.valueOf(contentCount));
+                            }
+                        });
+                        if (contentCount == mediaList.size()) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+                                    ((NewPostProgress) ((NewsFeedFragment) fragmentList.get(0)).postList.get(1)).setProgress(90);
+                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.notifyItemChanged(1);
+
+                                    Log.d("ContentCount", String.valueOf(contentCount));
+
+                                }
+
+                            });
+
+                            //((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                            Toast.makeText(context, "Last Item uploaded", Toast.LENGTH_SHORT).show();
+                            //MONGODB INSERT
+                            Map<String, Map<String, Object>> Data = new HashMap<>();
+
+                            Long timestamp = System.currentTimeMillis();
+                            String userid = sharedPrefs.getUserIdFromSharedPref();
+                            Map<String, Object> PostData = new HashMap<>();
+                            PostData.put("UserId", userid);
+                            PostData.put("Location", arrayList.get(1));
+                            PostData.put("PostText", arrayList.get(3));
+                            PostData.put("timestamp", timestamp);
+                            PostData.put("Town", arrayList.get(2));
+                            PostData.put("ContentPost", mediaList);
+                            PostData.put("LikesCount", 0);
+                            PostData.put("CommentsCount", 0);
+
+
+                            Map<String, Object> NotificationData = new HashMap<>();
+                            NotificationData.put("ByUserId", userid);
+                            NotificationData.put("timestamp", timestamp);
+                            NotificationData.put("Read", false);
+                            NotificationData.put("NotificationType", "town_post");
+
+                            Data.put("PostData", PostData);
+                            Data.put("NotificationData", NotificationData);
+
+
+                            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    Log.d("volleyadd", response.toString());
+                                    try {
+                                        if (response.getBoolean("success")) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                                }
+                                            });
+
+                                        } else {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ((NewsFeedFragment) fragmentList.get(0)).newsFeedRecyclerAdapter.dismissNewPostProgress();
+                                                    Toast.makeText(context, "Could not upload, try again!", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Log.d("VolleyError", error.toString());
+                                }
+                            });
+                            RequestQueue queue = Volley.newRequestQueue(context);
+                            queue.add(jsonObjectRequest);
+                        }
+                    }
+
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getBaseContext(), "uploading", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
             }
+//            File imageFile = new File( new List<>((List<String>) arrayList.get(0)).get(0); //Compressed File
+//            float length = imageFile.length() / 1024f; // Size in KB
+//            String value;
+//            if (length >= 1024)
+//                value = length / 1024f + " MB";
+//            else
+//                value = length + " KB";
+//            String text = String.format(Locale.US, "%s\nName: %s\nSize: %s", getString(R.string.video_compression_complete), imageFile.getName(), value);
+//            Log.d("CompressComplete", text);
+//            Log.i("Silicompressor", "Path: " + arrayList.get(0));
+
+            //MONGODB INSERT
+            /*Map<String, Map<String, Object>> Data = new HashMap<>();
+
+            Long timestamp = System.currentTimeMillis();
+            String userid = sharedPrefs.getUserIdFromSharedPref();
+            Map<String, Object> PostData = new HashMap<>();
+            PostData.put("UserId", userid);
+            PostData.put("Location", arrayList.get(1));
+            PostData.put("PostText", arrayList.get(3));
+            PostData.put("timestamp", timestamp);
+            PostData.put("Town", arrayList.get(2));
+            PostData.put("ContentPost", arrayList.get(4));
+            PostData.put("LikesCount", 0);
+            PostData.put("CommentsCount", 0);
+
+
+            Map<String, Object> NotificationData = new HashMap<>();
+            NotificationData.put("ByUserId", userid);
+            NotificationData.put("timestamp", timestamp);
+            NotificationData.put("Read", false);
+            NotificationData.put("NotificationType", "town_post");
+
+            Data.put("PostData", PostData);
+            Data.put("NotificationData", NotificationData);
+
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Log.d("volleyadd", response.toString());
+                    //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d("VolleyError", error.toString());
+                }
+            });
+
+
+            RequestQueue queue = Volley.newRequestQueue(context);
+            queue.add(jsonObjectRequest);
+*/
+
+//            try {
+//                byte[] videoByte = convertPathToBytes(String.valueOf(imageFile));
+//                final MainActivity.Media mediaClass = new MainActivity.Media(2, videoByte);
+//                //mediaClassList.add(mediaClass);
+//                ((List<Media>)arrayList.get(4)).add(mediaClass);
+//
+//                final List<String> mediaList = ((List<String>)arrayList.get(5));
+//
+//
+//
+//                if (isLastItem) {
+//                    for (int i = 0; i < ((List<Media>)arrayList.get(4)).size(); i++) {
+//                        String uniqueId = UUID.randomUUID().toString();
+//
+//                        if (((List<Media>)arrayList.get(4)).get(i).getMediaType() == 1) // IMAGE
+//                        {
+//                            mediaList.add("image:" + uniqueId);
+//                            mediaRef = storageRef.child("images/image:" + uniqueId);
+//                        } else {
+//                            mediaList.add("video:" + uniqueId);
+//                            mediaRef = storageRef.child("images/video:" + uniqueId);
+//                        }
+//
+//                        mediaRef.putBytes(((List<Media>)arrayList.get(4)).get(i).getbytes())
+//                                .addOnFailureListener(new OnFailureListener() {
+//                                    @Override
+//                                    public void onFailure(@NonNull Exception e) {
+//                                        Log.d("storageerror", e.toString());
+//                                    }
+//                                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                            @Override
+//                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                                Toast.makeText(getBaseContext(), "uploaded", Toast.LENGTH_SHORT).show();
+//
+//
+//
+//                                //MONGODB INSERT
+//                                Map<String, Map<String, Object>> Data = new HashMap<>();
+//
+//                                Long timestamp = System.currentTimeMillis();
+//                                String userid = sharedPrefs.getUserIdFromSharedPref();
+//                                Map<String, Object> PostData = new HashMap<>();
+//                                PostData.put("UserId", userid);
+//                                PostData.put("Location", arrayList.get(1));
+//                                PostData.put("PostText", arrayList.get(3));
+//                                PostData.put("timestamp", timestamp.toString());
+//                                PostData.put("Town", arrayList.get(2));
+//                                PostData.put("ContentPost", mediaList);
+//                                PostData.put("LikesCount", 0);
+//                                PostData.put("CommentsCount", 0);
+//
+//
+//                                Map<String, Object> NotificationData = new HashMap<>();
+//                                NotificationData.put("ByUserId", userid);
+//                                NotificationData.put("timestamp", timestamp);
+//                                NotificationData.put("Read", false);
+//                                NotificationData.put("NotificationType", "town_post");
+//
+//                                Data.put("PostData", PostData);
+//                                Data.put("NotificationData", NotificationData);
+//
+//
+//                                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(URL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+//                                    @Override
+//                                    public void onResponse(JSONObject response) {
+//                                        Log.d("volleyadd", response.toString());
+//                                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, context);
+//                                    }
+//                                }, new Response.ErrorListener() {
+//                                    @Override
+//                                    public void onErrorResponse(VolleyError error) {
+//                                        Log.d("VolleyError", error.toString());
+//                                    }
+//                                });
+//
+//
+//                                RequestQueue queue = Volley.newRequestQueue(context);
+//                                queue.add(jsonObjectRequest);
+//
+//                            }
+//
+//                        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//                            @Override
+//                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//
+//                            }
+//                        });
+//                    }
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            Log.d("progress", values.toString());
+
+            //Toast.makeText(context,values.toString(),Toast.LENGTH_SHORT).show();
         }
     }
-
-
 }

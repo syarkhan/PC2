@@ -78,22 +78,22 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_ONE_SHOT);
 
-        Bitmap bitmapIcon = BitmapFactory.decodeResource(getResources(), R.mipmap.projectcityicon);
+        Bitmap bitmapIcon = BitmapFactory.decodeResource(getResources(), R.drawable.pc_notification);
 
 //        Notification notification = new Notification.BigTextStyle(builder)
 //                .bigText(myText).build();
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.projectcityicon)
+                .setSmallIcon(R.drawable.pc_notification)
                 .setLargeIcon(bitmapIcon)
                 .setColor(Color.BLUE)
-                .setContentTitle(title)
-                .setContentText(message)
+                .setContentTitle("projectCity")
+                .setContentText(title+" : "+ message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(title+" : "+ message))
                 .setContentIntent(pendingIntent);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

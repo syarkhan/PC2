@@ -18,6 +18,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.sheryarkhan.projectcity.Glide.GlideApp;
 import com.example.sheryarkhan.projectcity.R;
 import com.example.sheryarkhan.projectcity.activities.NotificationPostActivity;
+import com.example.sheryarkhan.projectcity.utils.Constants;
 import com.example.sheryarkhan.projectcity.utils.HelperFunctions;
 import com.example.sheryarkhan.projectcity.utils.SharedPrefs;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -65,12 +66,21 @@ public class NotificationsRecyclerAdapter extends RecyclerView.Adapter<Notificat
     private void SetUpNotificationsView(final Context context, final NotificationsHolder mholder, int position) {
         final Notification currentData = notificationsList.get(mholder.getAdapterPosition());
 
-        if(currentData.getRead()){
-            mholder.parentLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.white));
-            mholder.unread_circle.setVisibility(View.GONE);
-        }else{
-            //mholder.parentLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.white));
-            //mholder.unread_circle.setVisibility(View.VISIBLE);
+        if(currentData.getNotificationType().equals(Constants.TOWN_POST)){
+            if(currentData.getTownNotification().isRead()){
+                mholder.parentLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.white));
+                mholder.unread_circle.setVisibility(View.GONE);
+            }else{
+
+            }
+        }else {
+            if (currentData.getRead()) {
+                mholder.parentLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.white));
+                mholder.unread_circle.setVisibility(View.GONE);
+            } else {
+                //mholder.parentLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.white));
+                //mholder.unread_circle.setVisibility(View.VISIBLE);
+            }
         }
         switch (currentData.getNotificationType()) {
             case "post_comment":
@@ -140,8 +150,8 @@ public class NotificationsRecyclerAdapter extends RecyclerView.Adapter<Notificat
 
     }
 
-    public String getItem(int position) {
-        return notificationsList.get(position).getPostId();
+    public Notification getItem(int position) {
+        return notificationsList.get(position);
     }
 
 

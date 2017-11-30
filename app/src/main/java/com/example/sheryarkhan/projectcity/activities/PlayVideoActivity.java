@@ -73,6 +73,7 @@ public class PlayVideoActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private ImageButton playButton;
     private ImageButton pauseButton;
+    private ImageButton backBtn;
     private long playbackPosition;
     private int currentWindow;
     private boolean playWhenReady = true;
@@ -93,6 +94,7 @@ public class PlayVideoActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar2);
         playButton = (ImageButton) findViewById(R.id.exo_play);
         pauseButton = (ImageButton) findViewById(R.id.exo_pause);
+        backBtn = (ImageButton) findViewById(R.id.back_btn);
         componentListener = new ComponentListener();
         Intent i = getIntent();
         Url = i.getStringExtra("url");
@@ -129,20 +131,20 @@ public class PlayVideoActivity extends AppCompatActivity {
         return true;
     }*/
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-
-        /*  int eventAction = event.getAction();
-        switch (eventAction) {
-            case MotionEvent.ACTION_DOWN:*/
-        showAndHideToolbar();
-                /*if(isToolBar) {
-                    hideToolbarAfterSomeSec(playerView.getControllerShowTimeoutMs());
-                }*/
-            /*    break;
-        }*/
-        return true;
-    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//
+//        /*  int eventAction = event.getAction();
+//        switch (eventAction) {
+//            case MotionEvent.ACTION_DOWN:*/
+//        showAndHideToolbar();
+//                /*if(isToolBar) {
+//                    hideToolbarAfterSomeSec(playerView.getControllerShowTimeoutMs());
+//                }*/
+//            /*    break;
+//        }*/
+//        return true;
+//    }
 
      /*   @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -152,21 +154,21 @@ public class PlayVideoActivity extends AppCompatActivity {
         return true;
     }*/
 
-    private void showAndHideToolbar(){
-
-        if(isToolBar){
-            //playerView.hideController();
-
-            toolbar.setVisibility(View.GONE);
-            isToolBar = false;
-            // playbackControlView.hide();
-
-
-        }else {
-            toolbar.setVisibility(View.VISIBLE);
-            isToolBar = true;
-        }
-    }
+//    private void showAndHideToolbar(){
+//
+//        if(isToolBar){
+//            //playerView.hideController();
+//
+//            toolbar.setVisibility(View.GONE);
+//            isToolBar = false;
+//            // playbackControlView.hide();
+//
+//
+//        }else {
+//            toolbar.setVisibility(View.VISIBLE);
+//            isToolBar = true;
+//        }
+//    }
 
 
     @Override
@@ -301,20 +303,20 @@ public class PlayVideoActivity extends AppCompatActivity {
         }
     }
 
-    public  void hideToolbarAfterSomeSec(int sec){
-
-
-        new Handler().postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-
-                toolbar.setVisibility(View.GONE);
-                isToolBar = false;
-            }
-        }, sec);
-
-    }
+//    public  void hideToolbarAfterSomeSec(int sec){
+//
+//
+//        new Handler().postDelayed(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//
+//                toolbar.setVisibility(View.GONE);
+//                isToolBar = false;
+//            }
+//        }, sec);
+//
+//    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -339,7 +341,7 @@ public class PlayVideoActivity extends AppCompatActivity {
                 case ExoPlayer.STATE_READY:
                     stateString = "ExoPlayer.STATE_READY     -";
                     progressBar.setVisibility(View.GONE);
-                    hideToolbarAfterSomeSec(playerView.getControllerShowTimeoutMs());
+                    //hideToolbarAfterSomeSec(playerView.getControllerShowTimeoutMs());
                     break;
                 case ExoPlayer.STATE_ENDED:
                     stateString = "ExoPlayer.STATE_ENDED     -";

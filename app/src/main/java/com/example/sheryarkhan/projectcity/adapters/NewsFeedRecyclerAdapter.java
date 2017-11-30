@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -19,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +52,7 @@ import com.facebook.ads.AdListener;
 import com.facebook.ads.AdSettings;
 import com.facebook.ads.MediaView;
 import com.facebook.ads.NativeAd;
+import com.facebook.ads.NativeAdView;
 import com.facebook.ads.NativeAdsManager;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -62,6 +66,7 @@ import com.google.firebase.database.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -69,6 +74,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import data.NewPostProgress;
 import data.Post;
 import data.PostsPOJO;
 
@@ -91,31 +97,40 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     private StorageReference storageReference;
     private SharedPrefs sharedPrefs;
     //private FirebaseAuth firebaseAuth;
-    private final FirebaseUser firebaseUser;
+    //private final FirebaseUser firebaseUser;
 
     private static final int TYPE_SHARE_NEWS = 1;
     private static final int TYPE_NEWS_POST = 2;
     private static final int TYPE_FB_AD = 3;
+    private static final int TYPE_PROGRESS = 4;
+    private static final int TYPE_NEW_POST_PROGRESS = 5;
     public static int AD_FORM = 3;
 
-    private NativeAdsManager mAds;
-    private NativeAd mAd = null;
+    private NativeAdsManager nativeAdsManager;
+    private NativeAd nativeAd;
 
-    private List<Post> newsFeedItemPOJOs;
+    private List<Object> postsList;
 
-    private DatabaseReference databaseReference;
+    //private DatabaseReference databaseReference;
 
     private IVolleyResult mResultCallback;
     private VolleyService mVolleyService;
 
-    public NewsFeedRecyclerAdapter(List<Post> newsFeedItems, Context context, NativeAdsManager ads) {
+    private OnLoadMoreListener onLoadMoreListener;
+    private boolean isMoreLoading = true;
+    private boolean isLiking_Disliking = false;
+
+
+    public NewsFeedRecyclerAdapter(List<Object> newsFeedItems, Context context, NativeAdsManager ads) {
         this.context = context;
-        this.newsFeedItemPOJOs = newsFeedItems;
+        this.postsList = newsFeedItems;
         storageReference = FirebaseStorage.getInstance().getReference();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        //databaseReference = FirebaseDatabase.getInstance().getReference();
+        //firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         sharedPrefs = new SharedPrefs(context);
-        this.mAds = ads;
+        this.nativeAdsManager = ads;
+        //this.nativeAd = nativeAd;
+        //this.onLoadMoreListener = onLoadMoreListener;
         //firebaseUser = firebaseAuth.getCurrentUser();
 
         mResultCallback = new IVolleyResult() {
@@ -136,10 +151,71 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
     }
 
+
+    public interface OnLoadMoreListener {
+        void onLoadMore1();
+    }
+
+
+    public void setMore(boolean isMore) {
+        this.isMoreLoading = isMore;
+    }
+
+    public void showLoading() {
+        if (postsList != null) {
+            //isMoreLoading = false;
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    postsList.add(null);
+                    Log.d("postsobject",postsList.toString());
+                    notifyItemInserted(postsList.size() - 1);
+                    //onLoadMoreListener.onLoadMore1();
+                }
+            });
+        }
+    }
+
+    public void dismissLoading() {
+        if (postsList != null && postsList.size() > 0) {
+            postsList.remove(postsList.size() - 1);
+            notifyItemRemoved(postsList.size());
+        }
+    }
+
+    public void dismissNewPostProgress() {
+        if (postsList != null && postsList.size() > 0) {
+            postsList.remove(1);
+            notifyItemRemoved(postsList.size());
+        }
+    }
+
+    public void updateNewPostProgress(int progress, NewPostProgressViewHolder holder) {
+
+    }
+
+
+    public void addAll(List<Post> lst) {
+        postsList.clear();
+        postsList.addAll(lst);
+        notifyDataSetChanged();
+    }
+
+    public void addItemMore(List<Object> lst) {
+        int sizeInit = lst.size();
+        postsList.addAll(lst);
+        notifyItemRangeChanged(sizeInit, postsList.size());
+    }
+
+    public void clear() {
+        postsList.clear();
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemCount() {
         try {
-            return (newsFeedItemPOJOs.size() + 2); //Plus 1 for the Share news layout at the top
+            return (postsList.size()); //Plus 1 for the Share news layout at the top
         } catch (Exception ex) {
 
         }
@@ -151,11 +227,17 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
         if (position == 0) {
             return TYPE_SHARE_NEWS;
-        } else if (position == 1) {
+        } else if (postsList.get(position) == null) {
+            return TYPE_PROGRESS;
+        } else if ( position == 11 || position == 21) {
             return TYPE_FB_AD;
-        } else {
+        } else if(postsList.get(position) instanceof NewPostProgress){
+            return TYPE_NEW_POST_PROGRESS;
+        }
+        else {
             return TYPE_NEWS_POST;
         }
+
     }
 
 
@@ -163,17 +245,23 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     public MainViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         //context = parent.getContext();
-//        return new OnlyPostImageViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
+//        return new PostViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
 
         switch (viewType) {
             case TYPE_NEWS_POST:
-                return new OnlyPostImageViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
+                return new PostViewHolder(LayoutInflater.from(context).inflate(R.layout.news_feed_list_item, parent, false));
 
             case TYPE_SHARE_NEWS:
                 return new ShareNewsPostViewHolder(LayoutInflater.from(context).inflate(R.layout.share_news_item_layout, parent, false));
 
+            case TYPE_PROGRESS:
+                return new ProgressBarViewHolder(LayoutInflater.from(context).inflate(R.layout.progress_list_item, parent, false));
+
             case TYPE_FB_AD:
                 return new FBAdViewHolder(LayoutInflater.from(context).inflate(R.layout.fb_ad_layout, parent, false));
+
+            case TYPE_NEW_POST_PROGRESS:
+                return new NewPostProgressViewHolder(LayoutInflater.from(context).inflate(R.layout.new_post_progress_item, parent, false));
 
         }
         return null;
@@ -196,10 +284,9 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
         //final Context context = holder.itemView.getContext();
         if (holder.getItemViewType() == TYPE_NEWS_POST) {
 
-            OnlyPostImageViewHolder mholder = (OnlyPostImageViewHolder) holder;
-            setUpPictureView(context, mholder, holder.getAdapterPosition() - 2);
-        }
-        else if (holder.getItemViewType() == TYPE_SHARE_NEWS) {
+            PostViewHolder mholder = (PostViewHolder) holder;
+            setUpPictureView(context, mholder, holder.getAdapterPosition());
+        } else if (holder.getItemViewType() == TYPE_SHARE_NEWS) {
 
 
             final ShareNewsPostViewHolder mholder = (ShareNewsPostViewHolder) holder;
@@ -207,8 +294,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             setUpShareNewsView(context, mholder);
 
 
-        }
-        else if (holder.getItemViewType() == TYPE_FB_AD) {
+        } else if (holder.getItemViewType() == TYPE_FB_AD) {
             final FBAdViewHolder mholder = (FBAdViewHolder) holder;
             setUpFBAdView(context, mholder);
 //            if (mAd != null) {
@@ -221,6 +307,9 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 //                setUpFBAdView(context, mholder, null);
 //            }
 
+        }else if(holder.getItemViewType() == TYPE_NEW_POST_PROGRESS){
+            final NewPostProgressViewHolder mholder = (NewPostProgressViewHolder) holder;
+            setUpNewPostProgress(mholder, context);
         }
 //        //set height in proportion to screen size
 //        int proportionalHeight = UIUtil.containerHeight((MainActivity) mCntx);
@@ -229,8 +318,25 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 
     }
 
+    public void setUpNewPostProgress(NewPostProgressViewHolder mholder, Context context) {
+        final NewPostProgress currentData = (NewPostProgress) postsList.get(mholder.getAdapterPosition());
+        mholder.progressBar.setProgress(currentData.getProgress());
+    }
+
 
     public void setUpFBAdView(final Context context, final FBAdViewHolder mholder) {
+
+        //nativeAd = nativeAdsManager.nextNativeAd();
+
+        //NativeAdView.render()
+
+//        try {
+//            mholder.templateContainer.removeViewInLayout(mholder.adView);
+//        }catch (Exception ex){
+//            ex.printStackTrace();
+//        }
+//
+//        mholder.templateContainer.addView(mholder.adView);
 
         AdSettings.addTestDevice("d799c50e3b4c9e58d4412f125770179b");
         final NativeAd nativeAd = new NativeAd(context, "2051713708390959_2051806708381659");
@@ -261,12 +367,12 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
                 mholder.adChoicesContainer.addView(adChoicesView);
 
 
-
                 // Register the Title and CTA button to listen for clicks.
                 List<View> clickableViews = new ArrayList<>();
                 clickableViews.add(mholder.mAdTitle);
                 clickableViews.add(mholder.mAdCallToAction);
-                //nativeAd.registerViewForInteraction(,clickableViews);
+                //nativeAd.registerViewForInteraction(mholder.adView);
+                //nativeAd.registerViewForInteraction(mholder.nativeAdContainer,clickableViews);
 
             }
 
@@ -378,7 +484,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 ////        switch (getItemViewType(position))
 ////        {
 ////            case TYPE_NEWS_POST:
-////                OnlyPostImageViewHolder mholder = (OnlyPostImageViewHolder) holder;
+////                PostViewHolder mholder = (PostViewHolder) holder;
 ////                mholder.txtName.setText("");
 ////
 ////            case TYPE_SHARE_NEWS:
@@ -386,7 +492,7 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 ////        }
 //        if(position > 0)
 //        {
-//            OnlyPostImageViewHolder mholder = (OnlyPostImageViewHolder) holder;
+//            PostViewHolder mholder = (PostViewHolder) holder;
 //            mholder.txtName.setText("");
 //        }
 //
@@ -394,9 +500,9 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 //    }
 
 
-    private void setUpPictureView(final Context context, final OnlyPostImageViewHolder mholder, final int position) {
+    private void setUpPictureView(final Context context, final PostViewHolder mholder, final int position) {
 
-        final Post currentData = newsFeedItemPOJOs.get(position);
+        final Post currentData = (Post) postsList.get(position);
 
         if (currentData.getContentPost() == null) {
             mholder.viewPager.setVisibility(View.GONE);
@@ -450,10 +556,22 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
         mholder.likesCount = currentData.getLikesCount();
         mholder.commentsCount = currentData.getCommentsCount();
 
-//        if (currentData.getLikes().containsKey(firebaseUser.getUid())) {
-//            mholder.btnHelpful.setTag("like_active");
-//            mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
-//        }
+        if (currentData.getLikes().size() > 0) {
+
+            //mholder.isLiked = currentData.getLikes().contains(sharedPrefs.getUserIdFromSharedPref());
+
+            if (currentData.getLikes().contains(sharedPrefs.getUserIdFromSharedPref())) {
+                mholder.btnHelpful.setTag("like_active");
+                mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+                //mholder.isLiked = true;
+            } else {
+                mholder.btnHelpful.setTag("like");
+                mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+            }
+        } else {
+            mholder.btnHelpful.setTag("like");
+            mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+        }
 
         mholder.txtLikes.setText(mholder.likesCount + " " + context.getResources().getString(R.string.likes_dot));
         mholder.txtComments.setText(mholder.commentsCount + " " + context.getResources().getString(R.string.comments));
@@ -479,12 +597,36 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             @Override
             public void onClick(View view) {
 
+
+                //boolean isLiking_Disliking = false;
 //                WifiManager wifi = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 //                if (!wifi.isWifiEnabled()) {
 //                    //wifi is not enabled
 //                    HelperFunctions.getToastShort(context, "No internet connection!");
 //                    return;
 //                }
+
+                Map<String, Map<String, Object>> Data = new HashMap<>();
+
+                Map<String, Object> PostData = new HashMap<>();
+                PostData.put("UserId", sharedPrefs.getUserIdFromSharedPref());
+                PostData.put("PostId", currentData.getPostId());
+                PostData.put("PostText", currentData.getPostText());
+                PostData.put("timestamp", currentData.getTimestamp());
+
+                Map<String, Object> NotificationData = new HashMap<>();
+                NotificationData.put("ByUserId", sharedPrefs.getUserIdFromSharedPref());
+                NotificationData.put("ToUserId", currentData.getUserId());
+                NotificationData.put("PostId", currentData.getPostId());
+                NotificationData.put("NotificationType", "post_like");
+                NotificationData.put("Read", false);
+                NotificationData.put("timestamp", currentData.getTimestamp());
+                //PostCommentData.put("CommentId", timestamp.toString());
+
+
+                Data.put("PostData", PostData);
+                Data.put("NotificationData", NotificationData);
+
                 view.startAnimation(AnimationUtils.loadAnimation(context, R.anim.image_resize));
                 if (mholder.btnHelpful.getTag().equals("like")) {
                     mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
@@ -494,25 +636,158 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
                     mholder.btnHelpful.setTag("like");
                 }
 
-//                final String likeAddOrRemoveURL = Constants.protocol + Constants.IP +
-//                        Constants.addOrRemoveUserLikeToPost+"/"+sharedPrefs.getUserIdFromSharedPref()+"/"+currentData.getPostId();
+//                final String likeAddURL = Constants.protocol + Constants.IP +
+//                        Constants.addUserToPostLikes + "/" + sharedPrefs.getUserIdFromSharedPref() + "&" + currentData.getPostId();
+
+                String likeAddOrRemoveURL;
+                final int state;
+                Log.d("likescountbefore1",String.valueOf(mholder.likesCount));
+
+                if (((Post) postsList.get(position)).getLikes().contains(sharedPrefs.getUserIdFromSharedPref())) {
+
+                    state = 2; // state 2 for REMOVAL OF USER FROM LIKES
+                    likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+                            Constants.addOrRemoveUserLikeToPost + "/" + sharedPrefs.getUserIdFromSharedPref() + "&" +
+                            currentData.getPostId() + "&" + state;
+
+
+                } else {
+                    state = 1; // state 1 for ADDITION OF USER TO LIKES
+                    likeAddOrRemoveURL = Constants.protocol + Constants.IP +
+                            Constants.addOrRemoveUserLikeToPost + "/" + sharedPrefs.getUserIdFromSharedPref() + "&" +
+                            currentData.getPostId() + "&" + state;
+                }
+
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, new JSONObject(Data), new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("volleyadd", response.toString());
+
+                        //isLiking_Disliking=false;
+                        Boolean isSuccess = false;
+                        try {
+                            isSuccess = response.getBoolean("success");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        if (!isSuccess) {
+                            //change icon like-active to like
+                            ((MainActivity) context).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+                                }
+                            });
+                            mholder.btnHelpful.setTag("like");
+                            Toast.makeText(context, "Did not succeed", Toast.LENGTH_SHORT).show();
+                        } else {
+
+                            int status = 2;
+                            try {
+                                status = response.getInt("status");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            if (status == 0) {
+                                return;
+                            } else {
+                                //notifyItemChanged(position);
+                                //change icon like to like-active
+                                Log.d("beforelikes2", ((Post) postsList.get(position)).getLikes().toString());
+                                // state 1 for ADDITION OF USER TO LIKES
+                                // state 2 for REMOVAL OF USER FROM LIKES
+
+                                if (state == 2) {
+                                    mholder.likesCount = mholder.likesCount - 1;
+                                    Log.d("likescount--3",String.valueOf(mholder.likesCount));
+                                    ((Post) postsList.get(position)).setLikesCount(mholder.likesCount);
+                                    ((Post) postsList.get(position)).removeUserFromLikesList(sharedPrefs.getUserIdFromSharedPref());
+                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+                                            context.getResources().getString(R.string.likes_dot));
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+                                    mholder.btnHelpful.setTag("like");
+                                    notifyItemChanged(position);
+                                    //change icon like-active to like
+//                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+
+//                                        }
+//                                    });
+                                } else if (state == 1) {
+                                    mholder.likesCount = mholder.likesCount + 1;
+                                    Log.d("likescount++3",String.valueOf(mholder.likesCount));
+                                    ((Post) postsList.get(position)).setLikesCount(mholder.likesCount);
+                                    ((Post) postsList.get(position)).addUserToLikesList(sharedPrefs.getUserIdFromSharedPref());
+                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+                                            context.getResources().getString(R.string.likes_dot));
+                                    mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+                                    mholder.btnHelpful.setTag("like_active");
+                                    notifyItemChanged(position);
+
+                                    //change icon like to like-active
+//                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+
+//                                        }
+//                                    });
+                                }
+                            }
+
+                            Log.d("afterlikes4", ((Post) postsList.get(position)).getLikes().toString());
+//                                if (state == 1) {
+//                                    mholder.likesCount=mholder.likesCount+1;
+//                                    ((Post)postsList.get(position)).setLikesCount(mholder.likesCount);
+//                                    ((Post)postsList.get(position)).addUserToLikesList(sharedPrefs.getUserIdFromSharedPref());
+//                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+//                                            context.getResources().getString(R.string.likes_dot));
+//                                    notifyItemChanged(position);
 //
-//                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, likeAddOrRemoveURL, null, new Response.Listener<JSONObject>() {
-//                    @Override
-//                    public void onResponse(JSONObject response) {
-//                        Log.d("volleyadd",response.toString());
+//                                    //change icon like to like-active
+////                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+////                                        @Override
+////                                        public void run() {
+//                                            mholder.btnHelpful.setImageResource(R.mipmap.ic_like_active);
+////                                        }
+////                                    });
+//                                } else if(state == 2) {
 //
-//                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
-//                    }
-//                }, new Response.ErrorListener() {
-//                    @Override
-//                    public void onErrorResponse(VolleyError error) {
-//                        Log.d("VolleyError", error.toString());
-//                    }
-//                });
-//
-//                RequestQueue queue = Volley.newRequestQueue(context);
-//                queue.add(jsonObjectRequest);
+//                                    mholder.likesCount=mholder.likesCount-1;
+//                                    ((Post)postsList.get(position)).setLikesCount(mholder.likesCount);
+//                                    ((Post)postsList.get(position)).removeUserFromLikesList(sharedPrefs.getUserIdFromSharedPref());
+//                                    mholder.txtLikes.setText(currentData.getLikesCount() + " " +
+//                                            context.getResources().getString(R.string.likes_dot));
+//                                    notifyItemChanged(position);
+//                                    //change icon like-active to like
+////                                    ((MainActivity) context).runOnUiThread(new Runnable() {
+////                                        @Override
+////                                        public void run() {
+//                                            mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+////                                        }
+////                                    });
+//                                }
+                        }
+                        //FirebasePushNotificationMethods.sendTownPostNotification(userid, key, txtPrimary, txtSecondary, editTextShareNews, MainActivity.this);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("VolleyError", error.toString());
+                        ((MainActivity) context).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mholder.btnHelpful.setImageResource(R.mipmap.ic_like);
+                            }
+                        });
+
+                    }
+                });
+
+                    RequestQueue queue = Volley.newRequestQueue(context);
+                    queue.add(jsonObjectRequest);
+                    //isLiking_Disliking = true;
 
 
 
@@ -653,8 +928,24 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
     }
 
 
+    private class ProgressBarViewHolder extends MainViewHolder {
+
+        ProgressBar progressBar;
+
+        private ProgressBarViewHolder(View itemView) {
+            super(itemView);
+
+            progressBar = (ProgressBar) itemView.findViewById(R.id.progressBar);
+        }
+
+    }
+
+
     private class FBAdViewHolder extends MainViewHolder {
 
+        private CardView nativeAdContainer;
+        protected LinearLayout templateContainer;
+        private CardView adView;
         private MediaView mAdMedia;
         private ImageView mAdIcon;
         private TextView mAdTitle;
@@ -671,20 +962,34 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
 //                mAdSocialContext = (TextView) itemView.findViewById(R.id.native_ad_social_context);
 //                mAdCallToAction = (Button) itemView.findViewById(R.id.native_ad_call_to_action);
 //            } else {
-                mAdMedia = (MediaView) itemView.findViewById(R.id.native_ad_media);
-                mAdTitle = (TextView) itemView.findViewById(R.id.native_ad_title);
-                mAdBody = (TextView) itemView.findViewById(R.id.native_ad_body);
-                mAdSocialContext = (TextView) itemView.findViewById(R.id.native_ad_social_context);
-                mAdCallToAction = (Button) itemView.findViewById(R.id.native_ad_call_to_action);
-                mAdIcon = (ImageView) itemView.findViewById(R.id.native_ad_icon);
-                adChoicesContainer = (LinearLayout) itemView.findViewById(R.id.ad_choices_container);
+//            nativeAdContainer = (CardView) itemView.findViewById(R.id.main);
+//            LayoutInflater inflater = LayoutInflater.from(context);
+//            adView = (CardView) inflater.inflate(R.layout.fb_ad_layout, nativeAdContainer, false);
+//            nativeAdContainer.addView(adView);
+
+            mAdMedia = (MediaView) itemView.findViewById(R.id.native_ad_media);
+            mAdTitle = (TextView) itemView.findViewById(R.id.native_ad_title);
+            mAdBody = (TextView) itemView.findViewById(R.id.native_ad_body);
+            mAdSocialContext = (TextView) itemView.findViewById(R.id.native_ad_social_context);
+            mAdCallToAction = (Button) itemView.findViewById(R.id.native_ad_call_to_action);
+            mAdIcon = (ImageView) itemView.findViewById(R.id.native_ad_icon);
+            adChoicesContainer = (LinearLayout) itemView.findViewById(R.id.ad_choices_container);
             //}
         }
 
     }
 
+    private class NewPostProgressViewHolder extends MainViewHolder {
+        ProgressBar progressBar;
+        int progress = 0;
 
-    private class OnlyPostImageViewHolder extends MainViewHolder {
+        public NewPostProgressViewHolder(View itemView) {
+            super(itemView);
+            progressBar = (ProgressBar)itemView.findViewById(R.id.progressBar);
+        }
+    }
+
+    private class PostViewHolder extends MainViewHolder {
 
         int Id;
         TextView txtName;
@@ -698,8 +1003,9 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
         TabLayout tabLayout;
         int likesCount;
         int commentsCount;
+        boolean isLiked;
 
-        private OnlyPostImageViewHolder(View itemView) {
+        private PostViewHolder(View itemView) {
 
             super(itemView);
 
@@ -743,6 +1049,8 @@ public class NewsFeedRecyclerAdapter extends RecyclerView.Adapter<NewsFeedRecycl
             ROBOTO_FONT_LIGHT = Typeface.createFromAsset(context.getAssets(), "fonts/Roboto-Light.ttf");
         }
     }
+
+
 }
 
 //    public class OnlyPostVideoViewHolder extends MainViewHolder {

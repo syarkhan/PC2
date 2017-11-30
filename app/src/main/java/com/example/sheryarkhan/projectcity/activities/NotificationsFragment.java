@@ -1,5 +1,6 @@
 package com.example.sheryarkhan.projectcity.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -48,6 +49,7 @@ public class NotificationsFragment extends Fragment {
     private NotificationsRecyclerAdapter notificationsRecyclerAdapter;
     private RecyclerView notificationsRecyclerView;
     private LinearLayoutManager linearLayoutManager;
+    private Context context;
     public NotificationsFragment() {
         // Required empty public constructor
     }
@@ -56,9 +58,11 @@ public class NotificationsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         page_num=0;
+        context = getActivity();
         notificationsList = new ArrayList<>();
-        sharedPrefs = new SharedPrefs(getActivity());
+        sharedPrefs = new SharedPrefs(context);
         URL = changePageNumberURL(page_num);
+
 
     }
 
@@ -73,23 +77,29 @@ public class NotificationsFragment extends Fragment {
         notificationsRecyclerView.setItemViewCacheSize(20);
         notificationsRecyclerView.setDrawingCacheEnabled(true);
         notificationsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager = new LinearLayoutManager(context);
         notificationsRecyclerView.setLayoutManager(linearLayoutManager);
-        notificationsRecyclerAdapter = new NotificationsRecyclerAdapter(getActivity(), notificationsList);
+        notificationsRecyclerAdapter = new NotificationsRecyclerAdapter(context, notificationsList);
         notificationsRecyclerView.setAdapter(notificationsRecyclerAdapter);
 
         loadMoreData();
 
 
-        notificationsRecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(getActivity(), new RecyclerItemClickListener.OnItemClickListener() {
+        notificationsRecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(context, new RecyclerItemClickListener.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
                 Log.d("itemclicked1","ad");
-                final String postid = notificationsRecyclerAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), NotificationPostActivity.class);
+                final String postid = notificationsRecyclerAdapter.getItem(position).getPostId();
+                final String commentId = notificationsRecyclerAdapter.getItem(position).getCommentInfo().getCommentId();
+                final String notificationType = notificationsRecyclerAdapter.getItem(position).getNotificationType();
+                final String NotificationId = notificationsRecyclerAdapter.getItem(position).getId();
+                Intent intent = new Intent(context, NotificationPostActivity.class);
                 intent.putExtra("postId",postid);
                 intent.putExtra("userId",sharedPrefs.getUserIdFromSharedPref());
-                getActivity().startActivity(intent);
+                intent.putExtra("commentId",commentId);
+                intent.putExtra("notificationType",notificationType);
+                intent.putExtra("NotificationId",NotificationId);
+                context.startActivity(intent);
             }
         }));
 
@@ -139,7 +149,7 @@ public class NotificationsFragment extends Fragment {
                 //recyclerViewProgressBar.setVisibility(View.GONE);
                 if (response.equals("false")) {
                     //HelperFunctions.getToastShort(getActivity(),"No more data!");
-                    Toast.makeText(getActivity(), "No more data!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No more data!", Toast.LENGTH_SHORT).show();
                 } else {
 
                     GsonBuilder gsonBuilder = new GsonBuilder();
@@ -165,7 +175,7 @@ public class NotificationsFragment extends Fragment {
             }
         });
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        RequestQueue queue = Volley.newRequestQueue(context);
         queue.add(stringRequest);
         stringRequest.setRetryPolicy(new RetryPolicy() {
             @Override
